@@ -3,36 +3,37 @@ const msgInput = document.getElementById("msg");
 const sendBtn = document.getElementById("send");
 const clearBtn = document.getElementById("clear");
 
-function addLine(who, text) {
+function addMessage(text, sender) {
   const div = document.createElement("div");
-  div.className = "msg";
-  div.innerHTML = `<span class="${who.toLowerCase()}">${who}:</span> ${text}`;
+  div.className = "msg " + sender;
+
+  if (sender === "bot") {
+    div.textContent = `Bot:\n${text}`;
+  } else {
+    div.textContent = `You: ${text}`;
+  }
+
   chatbox.appendChild(div);
   chatbox.scrollTop = chatbox.scrollHeight;
 }
 
-async function sendMessage() {
-  const text = msgInput.value.trim();
-  if (!text) return;
+sendBtn.onclick = async () => {
+  const message = msgInput.value.trim();
+  if (!message) return;
 
-  addLine("You", text);
+  addMessage(message, "you");
   msgInput.value = "";
 
-  const res = await fetch("/chat", {
+  const response = await fetch("/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: text })
+    body: JSON.stringify({ message })
   });
 
-  const data = await res.json();
-  addLine("Bot", data.reply);
-}
+  const data = await response.json();
+  addMessage(data.reply, "bot");
+};
 
-sendBtn.addEventListener("click", sendMessage);
-msgInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") sendMessage();
-});
-
-clearBtn.addEventListener("click", () => {
+clearBtn.onclick = () => {
   chatbox.innerHTML = "";
-});
+};
