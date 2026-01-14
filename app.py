@@ -88,6 +88,19 @@ def chat():
     reply = get_bot_response(msg)
     return jsonify({"reply": reply})
 
+@app.route("/quiz/list", methods=["GET"])
+def list_quizzes():
+    topics = sorted(list(quiz_data.keys()))
+    if not topics:
+        return jsonify({"reply": "No quizzes available right now."})
+
+    lines = ["Available quizzes:"]
+    for i, t in enumerate(topics, start=1):
+        lines.append(f"{i}. {t}")
+    lines.append("\nType: quiz <topic>")
+    lines.append("Example: quiz number_systems")
+
+    return jsonify({"reply": "\n".join(lines), "topics": topics})
 
 @app.route("/quiz/start", methods=["POST"])
 def start_quiz():
@@ -156,4 +169,5 @@ def answer_quiz():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
