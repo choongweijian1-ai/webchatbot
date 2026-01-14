@@ -21,12 +21,299 @@
     {
       "tag": "thanks",
       "patterns": ["Thanks", "Thank you", "I appreciate it", "Thanks a lot"],
+      "responses": ["You’re welcome!", "No problem!", "Happy to help!"]
+    },
+
+    {
+      "tag": "analog_signals",
+      "patterns": [
+        "analog signals",
+        "analog signal",
+        "what is an analog signal",
+        "define analog signal",
+        "analog signal definition"
+      ],
       "responses": [
-        "You’re welcome!",
-        "No problem!",
-        "Happy to help "
+        "Definition:\nAn analog signal is one whose output varies continuously in step with the input.\n\nUse:\nAnalog uses sine waves.\n\nWhy:\n• Most “real-world” events are analog in nature.\n• Analog processing is usually simpler.\n• Analog processing is usually faster.\n• Traditional electronic systems were mostly analog in nature."
       ]
     },
+    {
+      "tag": "digital_signal",
+      "patterns": [
+        "digital signal",
+        "digital signals",
+        "what is a digital signal",
+        "define digital signal",
+        "digital signal definition"
+      ],
+      "responses": [
+        "Definition:\nA digital signal is one whose output varies at discrete voltage levels commonly called HIGH or LOW (1 or 0).\n\nUse:\nDigital signals use HIGH (1) and LOW (0) logic levels.\n\nWhy:\n• Data can be stored (memory characteristic of digital).\n• Data can be used in calculations.\n• Compatible with display technologies.\n• Compatible with computer technologies.\n• Systems can be programmed.\n• Digital IC families make design easier."
+      ]
+    },
+    {
+      "tag": "logic_levels",
+      "patterns": [
+        "logic levels",
+        "what are logic levels",
+        "define logic levels",
+        "ttl and cmos",
+        "ttl cmos logic levels",
+        "high low undefined logic"
+      ],
+      "responses": [
+        "Definition:\nLogic devices interpret voltage levels as HIGH or LOW.\n\nKey idea:\nTTL and CMOS ICs have different voltage ranges for HIGH, LOW, and Undefined states.\n\nNotes:\nInput voltages in the undefined region may cause unpredictable results."
+      ]
+    },
+    {
+      "tag": "number_systems",
+      "patterns": [
+        "number systems",
+        "what are number systems",
+        "define number system",
+        "decimal binary hexadecimal",
+        "types of number systems"
+      ],
+      "responses": [
+        "Definition:\nA number system represents numbers using a set of symbols and a base.\n\nUse:\nCommon systems used are Decimal (base 10), Binary (base 2), and Hexadecimal (base 16).\n\nWhy:\nDifferent number systems allow numbers to be expressed in forms convenient for different applications (e.g., human calculation = decimal, electronic calculation = binary)."
+      ]
+    },
+    {
+      "tag": "decimal_number_system",
+      "patterns": [
+        "decimal number system",
+        "decimal system",
+        "base 10",
+        "what is base 10",
+        "define decimal number system"
+      ],
+      "responses": [
+        "Definition:\nDecimal is the universal system that uses ten symbols from 0 to 9, representing quantities outside a digital system. Each digit position has a value based on powers of 10.\n\nUse:\nUsed for everyday counting, measurement, and arithmetic by humans.\n\nWhy:\n• Easy readable\n• Easy to manipulate"
+      ]
+    },
+    {
+      "tag": "binary_number_system",
+      "patterns": [
+        "binary number system",
+        "binary system",
+        "base 2",
+        "what is base 2",
+        "define binary number system"
+      ],
+      "responses": [
+        "Definition:\nThe binary number system is the most important system in digital systems and has two symbols: 0 and 1. Each bit position represents a power of 2.\n\nUse:\nUsed internally by digital electronic systems to represent data, instructions, and control signals.\n\nWhy:\n• Easy to differentiate and switch thresholds (e.g., 0V and Vcc)\n• Easy to understand and build logic gates\n• Binary data is robust in transmission and rejects noise."
+      ]
+    },
+    {
+      "tag": "hexadecimal_number_system",
+      "patterns": [
+        "hexadecimal number system",
+        "hexadecimal",
+        "hex system",
+        "base 16",
+        "what is base 16"
+      ],
+      "responses": [
+        "Definition:\nThe hexadecimal number system uses sixteen symbols (0–9, A–F).\n\nUse:\nUsed in memory addressing, programming, and debugging.\n\nWhy:\n• Fewer digits to represent numbers in binary and decimal\n• Easy conversion from binary"
+      ]
+    },
+    {
+      "tag": "combinational_logic_circuits",
+      "patterns": [
+        "combinational logic circuits",
+        "combinational logic",
+        "what is combinational logic",
+        "define combinational circuit"
+      ],
+      "responses": [
+        "Definition:\nA combinational logic circuit produces an output based only on the current inputs, with no memory.\n\nKey idea:\nOutput is determined purely by Boolean expressions.\n\nNotes:\nNo feedback or storage elements are used."
+      ]
+    },
+    {
+      "tag": "sop_sum_of_products",
+      "patterns": ["sop", "sum of products", "what is sop", "sop expression", "define sum of products"],
+      "responses": [
+        "Definition:\nAn expression formed by OR-ing multiple AND terms (minterms).\n\nForm:\nY = A·B + A′·C\n\nNotes:\n• Uses AND–OR gate structure\n• Based on output = 1 rows in the truth table"
+      ]
+    },
+    {
+      "tag": "pos_product_of_sums",
+      "patterns": ["pos", "product of sums", "what is pos", "pos expression", "define product of sums"],
+      "responses": [
+        "Definition:\nAn expression formed by AND-ing multiple OR terms (maxterms).\n\nForm:\nY = (A + B′)(C + D)\n\nNotes:\n• Uses OR–AND gate structure\n• Based on output = 0 rows in the truth table"
+      ]
+    },
+    {
+      "tag": "minterm_vs_maxterm",
+      "patterns": [
+        "minterm vs maxterm",
+        "difference between minterm and maxterm",
+        "minterm",
+        "maxterm"
+      ],
+      "responses": [
+        "Minterm:\n• Output = 1\n• Variables are AND-ed\n• Used in SOP\n\nMaxterm:\n• Output = 0\n• Variables are OR-ed\n• Used in POS"
+      ]
+    },
+    {
+      "tag": "truth_table_conversion",
+      "patterns": [
+        "truth table conversion",
+        "truth table to boolean expression",
+        "boolean expression to truth table",
+        "convert truth table"
+      ],
+      "responses": [
+        "Truth table → Boolean expression:\n• Output = 1 → write minterms → SOP\n• Output = 0 → write maxterms → POS\n\nBoolean expression → Truth table:\n• Place 1 for matching AND terms\n• All other combinations are 0"
+      ]
+    },
+    {
+      "tag": "boolean_algebra",
+      "patterns": ["boolean algebra", "what is boolean algebra", "define boolean algebra"],
+      "responses": [
+        "Definition:\nBoolean algebra is a mathematical method used to describe and simplify logic circuits.\n\nKey idea:\nBoolean expressions can be reduced to simpler forms using defined laws and theorems.\n\nNotes:\nSimpler expressions result in fewer gates, lower cost, and reduced power consumption."
+      ]
+    },
+    {
+      "tag": "logic_simplification",
+      "patterns": ["logic simplification", "simplify boolean expression", "why simplify logic", "what is logic simplification"],
+      "responses": [
+        "Definition:\nLogic simplification is the process of reducing a Boolean expression to its simplest equivalent form.\n\nKey idea:\nSimplified circuits perform the same function using fewer logic gates.\n\nNotes:\nSmaller circuits are easier to build, test, and troubleshoot."
+      ]
+    },
+    {
+      "tag": "de_morgans_theorems",
+      "patterns": ["de morgan", "de morgan's theorem", "de morgans theorems", "what is de morgan theorem"],
+      "responses": [
+        "Definition:\nDe Morgan’s theorems describe how inverted logic expressions can be transformed.\n\nBoolean expressions:\n(A + B)’ = A’ · B’\n(A · B)’ = A’ + B’\n\nNotes:\nUsed to eliminate long overbars and convert SOP expressions to POS and vice versa."
+      ]
+    },
+    {
+      "tag": "universal_gates",
+      "patterns": ["universal gates", "what are universal gates", "nand nor universal", "define universal gate"],
+      "responses": [
+        "Definition:\nA universal gate is a logic gate that can be used to implement any Boolean function.\n\nKey idea:\nNAND and NOR gates are universal gates.\n\nNotes:\nEntire logic circuits can be built using only NAND gates or only NOR gates."
+      ]
+    },
+    {
+      "tag": "karnaugh_map_kmap",
+      "patterns": ["karnaugh map", "k-map", "kmap", "what is karnaugh map"],
+      "responses": [
+        "Definition:\nA Karnaugh Map is a graphical method used to simplify Boolean expressions.\n\nKey idea:\nAdjacent cells differ by only one variable and follow Gray code order.\n\nNotes:\nUsed to obtain minimal SOP or POS expressions."
+      ]
+    },
+    {
+      "tag": "kmap_grouping_rules",
+      "patterns": ["k-map grouping rules", "kmap grouping rules", "how to group kmap", "karnaugh map grouping"],
+      "responses": [
+        "Definition:\nGrouping in a K-Map combines adjacent cells to simplify logic expressions.\n\nKey rules:\n• Groups contain 1, 2, 4, 8, … cells\n• Groups must be horizontal or vertical\n• Groups can overlap and wrap around\n• All 1s must be included\n\nNotes:\nAlways form the largest possible groups."
+      ]
+    },
+    {
+      "tag": "dont_care_conditions",
+      "patterns": ["dont care conditions", "don't care", "dont care in kmap", "what is dont care"],
+      "responses": [
+        "Definition:\nDon’t care conditions represent input combinations where the output can be either 0 or 1.\n\nKey idea:\nRepresented by 'X' in truth tables or K-Maps.\n\nNotes:\nUse don’t cares only if they help simplify the logic."
+      ]
+    },
+    {
+      "tag": "seven_segment_display",
+      "patterns": ["seven segment display", "7 segment display", "what is seven segment display", "define seven segment display"],
+      "responses": [
+        "Definition:\nA seven-segment display is an output device used to display decimal digits.\n\nKey idea:\nSeven individual LED segments (a–g) are turned on or off to form numbers.\n\nNotes:\nWidely used in digital clocks, counters, and displays."
+      ]
+    },
+    {
+      "tag": "common_anode_vs_common_cathode",
+      "patterns": ["common anode vs common cathode", "common anode", "common cathode", "difference common anode cathode"],
+      "responses": [
+        "Definition:\nSeven-segment displays can be common-anode or common-cathode types.\n\nKey idea:\n• Common-anode → logic 0 turns ON segment\n• Common-cathode → logic 1 turns ON segment\n\nNotes:\nThe logic design depends on the display type used."
+      ]
+    },
+    {
+      "tag": "basic_binary_addition",
+      "patterns": ["basic binary addition", "binary addition rules", "add binary", "how to add binary"],
+      "responses": [
+        "Definition:\nBinary addition is the process of adding binary digits (0 and 1).\n\nKey rules:\n0 + 0 = 0\n0 + 1 = 1\n1 + 0 = 1\n1 + 1 = 10 (sum = 0, carry = 1)\n\nNotes:\nBinary addition forms the basis of all electronic adders."
+      ]
+    },
+    {
+      "tag": "half_adder",
+      "patterns": ["half adder", "what is a half adder", "define half adder", "half adder truth table", "half adder equations"],
+      "responses": [
+        "Definition:\nA half adder adds two binary bits and produces a Sum and a Carry-out.\n\nBoolean expressions:\nSum = A ⊕ B\nCout = A · B\n\nTruth table:\nA B | Sum Cout\n0 0 |  0    0\n0 1 |  1    0\n1 0 |  1    0\n1 1 |  0    1\n\nNotes:\nCannot add a carry-in from a previous stage."
+      ]
+    },
+    {
+      "tag": "full_adder",
+      "patterns": ["full adder", "what is a full adder", "define full adder", "full adder equations", "full adder truth table"],
+      "responses": [
+        "Definition:\nA full adder adds three binary bits (A, B, and Cin) and produces a Sum and a Carry-out.\n\nBoolean expressions:\nSum = A ⊕ B ⊕ Cin\nCout = A·B + Cin·(A ⊕ B)\n\nNotes:\nCan be constructed using two half adders and an OR gate."
+      ]
+    },
+    {
+      "tag": "parallel_binary_adder",
+      "patterns": ["parallel binary adder", "what is parallel binary adder", "define parallel binary adder"],
+      "responses": [
+        "Definition:\nA parallel binary adder adds multi-bit binary numbers using multiple full adders.\n\nKey idea:\nEach full adder handles one bit position.\n\nNotes:\nCarry-out of one stage connects to carry-in of the next stage."
+      ]
+    },
+    {
+      "tag": "ripple_carry_adder",
+      "patterns": ["ripple carry adder", "what is ripple carry adder", "define ripple carry adder"],
+      "responses": [
+        "Definition:\nA ripple carry adder passes the carry from one full adder to the next.\n\nKey idea:\nCarry propagates sequentially through each stage.\n\nNotes:\nSimple design but slower due to carry propagation delay."
+      ]
+    },
+    {
+      "tag": "look_ahead_carry_adder",
+      "patterns": ["look-ahead carry adder", "look ahead carry adder", "what is look ahead carry adder", "define look ahead carry adder"],
+      "responses": [
+        "Definition:\nA look-ahead carry adder generates carry signals in parallel.\n\nKey idea:\nCarry is predicted instead of waiting for propagation.\n\nNotes:\nFaster than ripple carry adder but more complex."
+      ]
+    },
+    {
+      "tag": "signed_binary_numbers",
+      "patterns": ["signed binary numbers", "what are signed binary numbers", "define signed binary numbers"],
+      "responses": [
+        "Definition:\nSigned binary numbers represent both positive and negative values.\n\nKey idea:\nMSB is the sign bit (0 = positive, 1 = negative).\n\nNotes:\nMagnitude represents the numerical value."
+      ]
+    },
+    {
+      "tag": "sign_magnitude_representation",
+      "patterns": ["sign magnitude representation", "sign-magnitude", "what is sign magnitude", "define sign magnitude"],
+      "responses": [
+        "Definition:\nThe MSB represents the sign, remaining bits represent magnitude.\n\nKey idea:\nNegative numbers have the same magnitude as positive numbers.\n\nNotes:\nLeast commonly used signed representation."
+      ]
+    },
+    {
+      "tag": "ones_complement_representation",
+      "patterns": ["1's complement", "ones complement", "what is ones complement", "define ones complement"],
+      "responses": [
+        "Definition:\nNegative numbers are formed by inverting all bits of the positive number.\n\nKey idea:\nBitwise inversion (1 → 0, 0 → 1).\n\nNotes:\nHas two representations for zero."
+      ]
+    },
+    {
+      "tag": "twos_complement_representation",
+      "patterns": ["2's complement", "two's complement", "twos complement", "what is twos complement", "define twos complement"],
+      "responses": [
+        "Definition:\nNegative numbers are formed by inverting all bits and adding 1.\n\nKey idea:\nMost important signed number system.\n\nNotes:\nUsed because addition and subtraction are simple."
+      ]
+    },
+    {
+      "tag": "twos_complement_add_subtract",
+      "patterns": ["2's complement addition", "2's complement subtraction", "twos complement addition subtraction", "how to subtract using twos complement"],
+      "responses": [
+        "Definition:\nSigned addition and subtraction are performed using 2’s complement.\n\nKey idea:\nSubtraction is done by adding the 2’s complement of the number.\n\nNotes:\nDiscard the final carry-out."
+      ]
+    },
+    {
+      "tag": "range_of_signed_numbers",
+      "patterns": ["range of signed numbers", "signed number range", "range in twos complement", "range for n bits signed"],
+      "responses": [
+        "Definition:\nThe range depends on the number of bits used.\n\nKey idea:\nFor N bits: −(2^(N−1)) to (2^(N−1) − 1)\n\nNotes:\nOne bit is reserved as the sign bit."
+      ]
+    },
+
     {
       "tag": "noanswer",
       "patterns": [],
@@ -34,125 +321,6 @@
         "I’m not sure I understand. Could you rephrase?",
         "Hmm, I don’t know the answer to that yet.",
         "I’m still learning! Try asking something else."
-      ]
-    },
-    {
-      "tag": "parallel circuit",
-      "patterns": ["parallel", "parallel circuit"],
-      "responses": [
-        "A parallel circuit is an electrical circuit with multiple paths for current to flow, where components are connected side-by-side across the same two points. This means each component receives the same voltage, but the total current is the sum of the currents in each branch. If one path is broken, the other components in the parallel branches will continue to work because they have their own complete circuit. "
-      ]
-    },
-    {
-      "tag": "series circuit",
-      "patterns": [
-        "series",
-        "series circuit"],
-      "responses": [
-        "A series circuit is an electrical circuit with a single path for current to flow, meaning all components are connected end-to-end in a single loop. Because there is only one path, the current is the same through every component. If any part of the circuit is broken or a component fails, the entire circuit stops working because the loop is interrupted"
-      ]
-    },
-    {
-      "tag": "parallel circuit formula",
-      "patterns": [
-        "parallel formula",
-        "parallel circuit formula"],
-      "responses": [
-        " total resistance in a parallel circuit:\n\n1/RT = 1/R1 + 1/R2 + 1/R3 + ...\n\nRT = total resistance, and R1, R2, R3 are the individual resistances."
-        ]
-    },
-    {
-      "tag": "analog signal",
-      "patterns": ["analog signal", "what is analog", "analog"],
-      "responses": [
-        "An analog signal varies continuously with time and represents real-world signals using smooth waveforms such as sine waves."
-      ]
-    },
-    {
-      "tag": "digital signal",
-      "patterns": ["digital signal", "what is digital", "digital"],
-      "responses": [
-        "A digital signal varies at discrete voltage levels, commonly represented as HIGH (1) or LOW (0)."
-      ]
-    },
-    {
-      "tag": "logic levels",
-      "patterns": ["logic levels", "ttl and cmos", "high and low logic"],
-      "responses": [
-        "Logic devices interpret voltage levels as HIGH or LOW. TTL and CMOS ICs have different voltage ranges, and undefined voltages can cause unpredictable behavior."
-      ]
-    },
-    {
-      "tag": "number systems",
-      "patterns": ["number systems", "binary decimal hexadecimal"],
-      "responses": [
-        "A number system represents numbers using symbols and a base. Common systems include Decimal (base 10), Binary (base 2), and Hexadecimal (base 16)."
-      ]
-    },
-    {
-      "tag": "decimal number system",
-      "patterns": ["decimal system", "base 10"],
-      "responses": [
-        "The decimal number system uses digits from 0 to 9 and is commonly used for everyday counting and calculations."
-      ]
-    },
-    {
-      "tag": "binary number system",
-      "patterns": ["binary system", "base 2"],
-      "responses": [
-        "The binary number system uses only 0 and 1. It is used internally by digital systems because it is easy to implement and resistant to noise."
-      ]
-    },
-    {
-      "tag": "hexadecimal number system",
-      "patterns": ["hexadecimal", "hex system", "base 16"],
-      "responses": [
-        "The hexadecimal system uses digits 0–9 and letters A–F. It is commonly used in programming and memory addressing."
-      ]
-    },
-    {
-      "tag": "boolean algebra",
-      "patterns": ["boolean algebra", "logic algebra"],
-      "responses": [
-        "Boolean algebra is a mathematical method used to analyze and simplify logic circuits using logical operations."
-      ]
-    },
-    {
-      "tag": "de morgan theorem",
-      "patterns": ["de morgan", "de morgan's theorem"],
-      "responses": [
-        "De Morgan’s theorems state that (A + B)’ = A’·B’ and (A·B)’ = A’ + B’. They are used to simplify logic expressions."
-      ]
-    },
-    {
-      "tag": "karnaugh map",
-      "patterns": ["k-map", "karnaugh map"],
-      "responses": [
-        "A Karnaugh Map is a graphical tool used to simplify Boolean expressions by grouping adjacent cells."
-      ]
-    },
-    {
-      "tag": "half adder",
-      "patterns": ["half adder"],
-      "responses": [
-        "A half adder adds two binary bits and produces a Sum and Carry. Sum = A ⊕ B, Carry = A·B."
-      ]
-    },
-    {
-      "tag": "full adder",
-      "patterns": ["full adder"],
-      "responses": [
-        "A full adder adds three bits (A, B, Cin) and outputs a Sum and Carry-out. It can be built using two half adders."
-      ]
-    },
-    {
-      "tag": "two's complement",
-      "patterns": [
-        "2s complement",
-        "two's complement"
-      ],
-      "responses": [
-        "Two’s complement represents negative numbers by inverting all bits and adding 1. It is the most widely used signed number system."
       ]
     }
   ]
