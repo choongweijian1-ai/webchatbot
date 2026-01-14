@@ -1,18 +1,1 @@
-{
-  "quizzes": {
-    "number_systems": [
-      {
-        "q": "Which number system uses base 2?",
-        "choices": ["Decimal", "Binary", "Hexadecimal", "Octal"],
-        "answer_index": 1,
-        "explain": "Binary is base 2 and is used in computers."
-      },
-      {
-        "q": "Hexadecimal is base ____?",
-        "choices": ["2", "8", "10", "16"],
-        "answer_index": 3,
-        "explain": "Hexadecimal uses base 16."
-      }
-    ]
-  }
-}
+
