@@ -75,6 +75,7 @@
       ],
       "responses": [
         "Definition:\nA number system represents numbers using a set of symbols and a base.\n\nUse:\nCommon systems used are Decimal (base 10), Binary (base 2), and Hexadecimal (base 16).\n\nWhy:\nDifferent number systems allow numbers to be expressed in forms convenient for different applications (e.g., human calculation = decimal, electronic calculation = binary)."
+      ]
     },
     {
       "tag": "decimal_number_system",
@@ -324,5 +325,6 @@
     }
   ]
 }
+
 
 
