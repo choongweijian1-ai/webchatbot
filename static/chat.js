@@ -4,16 +4,20 @@ const sendBtn = document.getElementById("send");
 const clearBtn = document.getElementById("clear");
 
 function addMessage(text, sender) {
-  const div = document.createElement("div");
-  div.className = "msg " + sender;
+  const msgDiv = document.createElement("div");
+  msgDiv.className = "msg";
 
-  if (sender === "bot") {
-    div.textContent = `Bot:\n${text}`;
-  } else {
-    div.textContent = `You: ${text}`;
-  }
+  const label = document.createElement("span");
+  label.className = sender === "bot" ? "bot-label" : "you-label";
+  label.textContent = sender === "bot" ? "Bot:" : "You:";
 
-  chatbox.appendChild(div);
+  const content = document.createElement("span");
+  content.textContent = sender === "bot" ? `\n${text}` : ` ${text}`;
+
+  msgDiv.appendChild(label);
+  msgDiv.appendChild(content);
+
+  chatbox.appendChild(msgDiv);
   chatbox.scrollTop = chatbox.scrollHeight;
 }
 
@@ -37,3 +41,7 @@ sendBtn.onclick = async () => {
 clearBtn.onclick = () => {
   chatbox.innerHTML = "";
 };
+
+msgInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") sendBtn.click();
+});
