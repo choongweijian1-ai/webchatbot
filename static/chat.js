@@ -6,6 +6,11 @@ const clearBtn = document.getElementById("clear");
 // Track if quiz is active on the client side
 let quizActive = false;
 
+async function getQuizList() {
+  const res = await fetch("/quiz/list");
+  return await res.json();
+}
+
 function addMessage(text, sender) {
   const msgDiv = document.createElement("div");
   msgDiv.className = "msg";
@@ -102,3 +107,4 @@ clearBtn.onclick = () => {
 msgInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") sendBtn.click();
 });
+
