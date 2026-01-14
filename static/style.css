@@ -18,17 +18,15 @@ body {
   padding: 10px;
   border-radius: 8px;
   background: #fafafa;
+  white-space: pre-line;
 }
 
 .msg {
   margin: 8px 0;
 }
 
-.you {
-  font-weight: bold;
-}
-
-.bot {
+.you-label,
+.bot-label {
   font-weight: bold;
 }
 
@@ -47,7 +45,3 @@ button {
   padding: 10px 14px;
   cursor: pointer;
 }
-.chatbox {
-  white-space: pre-line;
-}
-
