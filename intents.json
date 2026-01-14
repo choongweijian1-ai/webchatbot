@@ -1,0 +1,159 @@
+{
+  "intents": [
+    {
+      "tag": "greeting",
+      "patterns": ["Hi", "Hello", "Hey", "Good morning", "Good evening"],
+      "responses": [
+        "Hello! How can I help you today?",
+        "Hi there, what can I do for you?",
+        "Hey! Need any help?"
+      ]
+    },
+    {
+      "tag": "goodbye",
+      "patterns": ["Bye", "See you", "Goodbye", "Catch you later"],
+      "responses": [
+        "Goodbye! Have a great day.",
+        "See you later!",
+        "Bye! Come back anytime."
+      ]
+    },
+    {
+      "tag": "thanks",
+      "patterns": ["Thanks", "Thank you", "I appreciate it", "Thanks a lot"],
+      "responses": [
+        "You’re welcome!",
+        "No problem!",
+        "Happy to help "
+      ]
+    },
+    {
+      "tag": "noanswer",
+      "patterns": [],
+      "responses": [
+        "I’m not sure I understand. Could you rephrase?",
+        "Hmm, I don’t know the answer to that yet.",
+        "I’m still learning! Try asking something else."
+      ]
+    },
+    {
+      "tag": "parallel circuit",
+      "patterns": ["parallel", "parallel circuit"],
+      "responses": [
+        "A parallel circuit is an electrical circuit with multiple paths for current to flow, where components are connected side-by-side across the same two points. This means each component receives the same voltage, but the total current is the sum of the currents in each branch. If one path is broken, the other components in the parallel branches will continue to work because they have their own complete circuit. "
+      ]
+    },
+    {
+      "tag": "series circuit",
+      "patterns": [
+        "series",
+        "series circuit"],
+      "responses": [
+        "A series circuit is an electrical circuit with a single path for current to flow, meaning all components are connected end-to-end in a single loop. Because there is only one path, the current is the same through every component. If any part of the circuit is broken or a component fails, the entire circuit stops working because the loop is interrupted"
+      ]
+    },
+    {
+      "tag": "parallel circuit formula",
+      "patterns": [
+        "parallel formula",
+        "parallel circuit formula"],
+      "responses": [
+        " total resistance in a parallel circuit:\n\n1/RT = 1/R1 + 1/R2 + 1/R3 + ...\n\nRT = total resistance, and R1, R2, R3 are the individual resistances."
+        ]
+    },
+    {
+      "tag": "analog signal",
+      "patterns": ["analog signal", "what is analog", "analog"],
+      "responses": [
+        "An analog signal varies continuously with time and represents real-world signals using smooth waveforms such as sine waves."
+      ]
+    },
+    {
+      "tag": "digital signal",
+      "patterns": ["digital signal", "what is digital", "digital"],
+      "responses": [
+        "A digital signal varies at discrete voltage levels, commonly represented as HIGH (1) or LOW (0)."
+      ]
+    },
+    {
+      "tag": "logic levels",
+      "patterns": ["logic levels", "ttl and cmos", "high and low logic"],
+      "responses": [
+        "Logic devices interpret voltage levels as HIGH or LOW. TTL and CMOS ICs have different voltage ranges, and undefined voltages can cause unpredictable behavior."
+      ]
+    },
+    {
+      "tag": "number systems",
+      "patterns": ["number systems", "binary decimal hexadecimal"],
+      "responses": [
+        "A number system represents numbers using symbols and a base. Common systems include Decimal (base 10), Binary (base 2), and Hexadecimal (base 16)."
+      ]
+    },
+    {
+      "tag": "decimal number system",
+      "patterns": ["decimal system", "base 10"],
+      "responses": [
+        "The decimal number system uses digits from 0 to 9 and is commonly used for everyday counting and calculations."
+      ]
+    },
+    {
+      "tag": "binary number system",
+      "patterns": ["binary system", "base 2"],
+      "responses": [
+        "The binary number system uses only 0 and 1. It is used internally by digital systems because it is easy to implement and resistant to noise."
+      ]
+    },
+    {
+      "tag": "hexadecimal number system",
+      "patterns": ["hexadecimal", "hex system", "base 16"],
+      "responses": [
+        "The hexadecimal system uses digits 0–9 and letters A–F. It is commonly used in programming and memory addressing."
+      ]
+    },
+    {
+      "tag": "boolean algebra",
+      "patterns": ["boolean algebra", "logic algebra"],
+      "responses": [
+        "Boolean algebra is a mathematical method used to analyze and simplify logic circuits using logical operations."
+      ]
+    },
+    {
+      "tag": "de morgan theorem",
+      "patterns": ["de morgan", "de morgan's theorem"],
+      "responses": [
+        "De Morgan’s theorems state that (A + B)’ = A’·B’ and (A·B)’ = A’ + B’. They are used to simplify logic expressions."
+      ]
+    },
+    {
+      "tag": "karnaugh map",
+      "patterns": ["k-map", "karnaugh map"],
+      "responses": [
+        "A Karnaugh Map is a graphical tool used to simplify Boolean expressions by grouping adjacent cells."
+      ]
+    },
+    {
+      "tag": "half adder",
+      "patterns": ["half adder"],
+      "responses": [
+        "A half adder adds two binary bits and produces a Sum and Carry. Sum = A ⊕ B, Carry = A·B."
+      ]
+    },
+    {
+      "tag": "full adder",
+      "patterns": ["full adder"],
+      "responses": [
+        "A full adder adds three bits (A, B, Cin) and outputs a Sum and Carry-out. It can be built using two half adders."
+      ]
+    },
+    {
+      "tag": "two's complement",
+      "patterns": [
+        "2s complement",
+        "two's complement"
+      ],
+      "responses": [
+        "Two’s complement represents negative numbers by inverting all bits and adding 1. It is the most widely used signed number system."
+      ]
+    }
+  ]
+}
