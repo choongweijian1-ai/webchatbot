@@ -5,13 +5,287 @@
         "q": "Which number system uses base 2?",
         "choices": ["Decimal", "Binary", "Hexadecimal", "Octal"],
         "answer_index": 1,
-        "explain": "Binary is base 2 and is used in computers."
+        "explain": "Binary uses base 2 and is used in computers. :contentReference[oaicite:1]{index=1}"
       },
       {
         "q": "Hexadecimal is base ____?",
         "choices": ["2", "8", "10", "16"],
         "answer_index": 3,
-        "explain": "Hexadecimal uses base 16."
+        "explain": "Hexadecimal uses base 16. :contentReference[oaicite:2]{index=2}"
+      },
+      {
+        "q": "Decimal number system uses symbols from:",
+        "choices": ["0 to 7", "0 to 9", "0 and 1", "0 to 15"],
+        "answer_index": 1,
+        "explain": "Decimal uses ten symbols from 0 to 9. :contentReference[oaicite:3]{index=3}"
+      },
+      {
+        "q": "Why is binary widely used in digital electronics?",
+        "choices": [
+          "It uses many symbols",
+          "It is robust and rejects noise",
+          "It is only used by humans",
+          "It is faster than light"
+        ],
+        "answer_index": 1,
+        "explain": "Binary is easy to differentiate (0V and Vcc) and is robust in transmission and noise rejection. :contentReference[oaicite:4]{index=4}"
+      }
+    ],
+
+    "signals": [
+      {
+        "q": "An analog signal output varies:",
+        "choices": ["Only as 0 or 1", "Continuously", "Only as letters A–F", "Only at undefined states"],
+        "answer_index": 1,
+        "explain": "Analog output varies continuously in step with the input. :contentReference[oaicite:5]{index=5}"
+      },
+      {
+        "q": "Digital signals typically use:",
+        "choices": ["Sine waves only", "HIGH and LOW (1 or 0)", "Ten symbols (0–9)", "Sixteen symbols (0–9, A–F)"],
+        "answer_index": 1,
+        "explain": "Digital signals use discrete logic levels HIGH (1) and LOW (0). :contentReference[oaicite:6]{index=6}"
+      },
+      {
+        "q": "Which is a reason digital systems are preferred?",
+        "choices": ["Always faster than analog", "Data can be stored in memory", "Cannot be programmed", "Not compatible with computers"],
+        "answer_index": 1,
+        "explain": "Digital data can be stored (memory characteristic) and systems can be programmed. :contentReference[oaicite:7]{index=7}"
+      },
+      {
+        "q": "Most real-world events are ______ in nature.",
+        "choices": ["Digital", "Analog", "Hexadecimal", "Boolean"],
+        "answer_index": 1,
+        "explain": "Most “real-world” events are analog in nature. :contentReference[oaicite:8]{index=8}"
+      }
+    ],
+
+    "logic_levels": [
+      {
+        "q": "Logic devices interpret voltage levels as:",
+        "choices": ["A–F", "HIGH or LOW", "0–9", "Sine and cosine"],
+        "answer_index": 1,
+        "explain": "Logic devices interpret voltage levels as HIGH or LOW. :contentReference[oaicite:9]{index=9}"
+      },
+      {
+        "q": "Input voltages in the undefined region may cause:",
+        "choices": ["Perfect results", "Unpredictable results", "Always HIGH", "Always LOW"],
+        "answer_index": 1,
+        "explain": "Voltages in the undefined region may cause unpredictable results. :contentReference[oaicite:10]{index=10}"
+      },
+      {
+        "q": "TTL and CMOS ICs have:",
+        "choices": ["Identical voltage ranges", "Different voltage ranges for HIGH/LOW/Undefined", "No undefined region", "Only analog outputs"],
+        "answer_index": 1,
+        "explain": "TTL and CMOS have different voltage ranges for HIGH, LOW, and Undefined states. :contentReference[oaicite:11]{index=11}"
+      }
+    ],
+
+    "combinational_logic": [
+      {
+        "q": "A combinational logic circuit output depends on:",
+        "choices": ["Past inputs (memory)", "Current inputs only", "Stored data only", "Clock frequency only"],
+        "answer_index": 1,
+        "explain": "Combinational logic produces output based only on current inputs, with no memory. :contentReference[oaicite:12]{index=12}"
+      },
+      {
+        "q": "Combinational circuits use:",
+        "choices": ["Feedback and storage elements", "No feedback or storage elements", "Only flip-flops", "Only registers"],
+        "answer_index": 1,
+        "explain": "No feedback or storage elements are used in combinational logic circuits. :contentReference[oaicite:13]{index=13}"
+      }
+    ],
+
+    "sop_pos_terms": [
+      {
+        "q": "SOP stands for:",
+        "choices": ["Sum of Products", "Sum of Positions", "System of Processing", "Set of Properties"],
+        "answer_index": 0,
+        "explain": "SOP is an expression formed by OR-ing multiple AND terms (minterms). :contentReference[oaicite:14]{index=14}"
+      },
+      {
+        "q": "POS stands for:",
+        "choices": ["Product of Sums", "Power of Systems", "Process of Signals", "Product of States"],
+        "answer_index": 0,
+        "explain": "POS is an expression formed by AND-ing multiple OR terms (maxterms). :contentReference[oaicite:15]{index=15}"
+      },
+      {
+        "q": "Minterms correspond to truth table rows where output is:",
+        "choices": ["0", "1", "Undefined", "A"],
+        "answer_index": 1,
+        "explain": "Minterm: output = 1; used in SOP. :contentReference[oaicite:16]{index=16}"
+      },
+      {
+        "q": "Maxterms correspond to truth table rows where output is:",
+        "choices": ["0", "1", "HIGH only", "LOW only"],
+        "answer_index": 0,
+        "explain": "Maxterm: output = 0; used in POS. :contentReference[oaicite:17]{index=17}"
+      }
+    ],
+
+    "boolean_simplification": [
+      {
+        "q": "Boolean algebra is used to:",
+        "choices": [
+          "Describe and simplify logic circuits",
+          "Draw sine waves",
+          "Convert decimal to base 16 only",
+          "Build only analog circuits"
+        ],
+        "answer_index": 0,
+        "explain": "Boolean algebra describes and simplifies logic circuits. :contentReference[oaicite:18]{index=18}"
+      },
+      {
+        "q": "Simpler Boolean expressions generally result in:",
+        "choices": ["More gates", "Fewer gates", "More power", "More complexity"],
+        "answer_index": 1,
+        "explain": "Simpler expressions result in fewer gates, lower cost, and reduced power consumption. :contentReference[oaicite:19]{index=19}"
+      },
+      {
+        "q": "De Morgan’s theorem: (A + B)’ equals:",
+        "choices": ["A’ + B’", "A’ · B’", "A · B", "A + B"],
+        "answer_index": 1,
+        "explain": "(A + B)’ = A’ · B’. :contentReference[oaicite:20]{index=20}"
+      },
+      {
+        "q": "De Morgan’s theorem: (A · B)’ equals:",
+        "choices": ["A’ + B’", "A’ · B’", "A · B", "A + B"],
+        "answer_index": 0,
+        "explain": "(A · B)’ = A’ + B’. :contentReference[oaicite:21]{index=21}"
+      },
+      {
+        "q": "Universal gates are:",
+        "choices": ["XOR and XNOR", "AND and OR", "NAND and NOR", "NOT and XOR"],
+        "answer_index": 2,
+        "explain": "NAND and NOR are universal gates. :contentReference[oaicite:22]{index=22}"
+      }
+    ],
+
+    "kmap_and_dontcare": [
+      {
+        "q": "A Karnaugh Map (K-Map) is used to:",
+        "choices": ["Store data", "Simplify Boolean expressions", "Generate sine waves", "Build flip-flops only"],
+        "answer_index": 1,
+        "explain": "A K-Map is a graphical method used to simplify Boolean expressions. :contentReference[oaicite:23]{index=23}"
+      },
+      {
+        "q": "K-Map grouping sizes can be:",
+        "choices": ["3, 5, 6 cells", "Any number", "1, 2, 4, 8... cells", "Only 10 cells"],
+        "answer_index": 2,
+        "explain": "Groups contain 1, 2, 4, 8, … cells. :contentReference[oaicite:24]{index=24}"
+      },
+      {
+        "q": "Groups in a K-Map must be:",
+        "choices": ["Diagonal only", "Horizontal or vertical", "Circular only", "Random"],
+        "answer_index": 1,
+        "explain": "Groups must be horizontal or vertical; can overlap and wrap around. :contentReference[oaicite:25]{index=25}"
+      },
+      {
+        "q": "Don’t care conditions are represented by:",
+        "choices": ["Z", "X", "U", "D"],
+        "answer_index": 1,
+        "explain": "Don’t cares are represented by 'X' and used only if they simplify the logic. :contentReference[oaicite:26]{index=26}"
+      }
+    ],
+
+    "seven_segment": [
+      {
+        "q": "A seven-segment display is used to display:",
+        "choices": ["Only binary", "Decimal digits", "Hex letters only", "Analog signals"],
+        "answer_index": 1,
+        "explain": "Seven-segment displays are used to display decimal digits. :contentReference[oaicite:27]{index=27}"
+      },
+      {
+        "q": "Common-anode display: logic ____ turns ON a segment.",
+        "choices": ["1", "0", "X", "Undefined"],
+        "answer_index": 1,
+        "explain": "Common-anode → logic 0 turns ON segment. :contentReference[oaicite:28]{index=28}"
+      },
+      {
+        "q": "Common-cathode display: logic ____ turns ON a segment.",
+        "choices": ["1", "0", "X", "Undefined"],
+        "answer_index": 0,
+        "explain": "Common-cathode → logic 1 turns ON segment. :contentReference[oaicite:29]{index=29}"
+      }
+    ],
+
+    "adders_and_binary_addition": [
+      {
+        "q": "What is 1 + 1 in binary?",
+        "choices": ["0", "1", "10", "11"],
+        "answer_index": 2,
+        "explain": "1 + 1 = 10 (sum=0, carry=1). :contentReference[oaicite:30]{index=30}"
+      },
+      {
+        "q": "A half adder adds:",
+        "choices": ["Two bits", "Three bits", "Four bits", "Only decimals"],
+        "answer_index": 0,
+        "explain": "A half adder adds two binary bits and outputs Sum and Carry-out. :contentReference[oaicite:31]{index=31}"
+      },
+      {
+        "q": "A half adder cannot add:",
+        "choices": ["Two inputs", "Carry-in from previous stage", "Sum output", "Carry-out output"],
+        "answer_index": 1,
+        "explain": "Half adder cannot add a carry-in from a previous stage. :contentReference[oaicite:32]{index=32}"
+      },
+      {
+        "q": "A full adder adds:",
+        "choices": ["One bit", "Two bits only", "Three bits (A, B, Cin)", "Eight bits"],
+        "answer_index": 2,
+        "explain": "A full adder adds A, B, and Cin and outputs Sum and Carry-out. :contentReference[oaicite:33]{index=33}"
+      },
+      {
+        "q": "A ripple carry adder is slower because carry:",
+        "choices": ["Is predicted", "Propagates sequentially", "Is removed", "Does not exist"],
+        "answer_index": 1,
+        "explain": "Ripple carry passes carry from one stage to the next sequentially, causing delay. :contentReference[oaicite:34]{index=34}"
+      },
+      {
+        "q": "A look-ahead carry adder is faster because carry is:",
+        "choices": ["Waited for", "Predicted in parallel", "Ignored", "Always set to 1"],
+        "answer_index": 1,
+        "explain": "Look-ahead carry generates carry signals in parallel (predicted). :contentReference[oaicite:35]{index=35}"
+      }
+    ],
+
+    "signed_numbers": [
+      {
+        "q": "In signed binary numbers, the MSB represents:",
+        "choices": ["Magnitude", "Base", "Sign", "Carry"],
+        "answer_index": 2,
+        "explain": "MSB is the sign bit (0 = positive, 1 = negative). :contentReference[oaicite:36]{index=36}"
+      },
+      {
+        "q": "2’s complement is formed by:",
+        "choices": [
+          "Inverting bits only",
+          "Inverting bits and adding 1",
+          "Adding 1 only",
+          "Adding 2 only"
+        ],
+        "answer_index": 1,
+        "explain": "2’s complement: invert all bits and add 1. :contentReference[oaicite:37]{index=37}"
+      },
+      {
+        "q": "In 2’s complement subtraction, you subtract by:",
+        "choices": [
+          "Dividing numbers",
+          "Adding the 2’s complement of the number",
+          "Ignoring the sign bit",
+          "Using only XOR"
+        ],
+        "answer_index": 1,
+        "explain": "Subtraction is done by adding the 2’s complement; final carry-out is discarded. :contentReference[oaicite:38]{index=38}"
+      },
+      {
+        "q": "Range of signed N-bit numbers is:",
+        "choices": [
+          "0 to 2^N",
+          "-(2^(N-1)) to (2^(N-1) - 1)",
+          "-(2^N) to (2^N - 1)",
+          "-N to +N"
+        ],
+        "answer_index": 1,
+        "explain": "For N bits: −(2^(N−1)) to (2^(N−1) − 1). :contentReference[oaicite:39]{index=39}"
       }
     ]
   }
