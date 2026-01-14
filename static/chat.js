@@ -70,14 +70,26 @@ sendBtn.onclick = async () => {
   const lower = message.toLowerCase();
 
   try {
-    // 1) Start quiz command: "start quiz"
+    // ✅ INSERTED HERE
+    if (
+      lower === "quiz" ||
+      lower === "quiz list" ||
+      lower === "list quiz" ||
+      lower === "list quizzes"
+    ) {
+      const data = await getQuizList();
+      addMessage(data.reply, "bot");
+      return;
+    }
+
+    // 1) Start quiz command
     if (lower === "start quiz") {
       const data = await startQuiz("number_systems");
       addMessage(data.reply, "bot");
       return;
     }
 
-    // 1b) Optional: "quiz <topic>" e.g. "quiz number_systems"
+    // 1b) Start quiz by topic
     if (lower.startsWith("quiz ")) {
       const topic = lower.replace("quiz ", "").trim();
       const data = await startQuiz(topic || "number_systems");
@@ -85,20 +97,22 @@ sendBtn.onclick = async () => {
       return;
     }
 
-    // 2) If quiz is active AND user typed 1-4, treat as answer
+    // 2) Answer quiz
     if (quizActive && ["1", "2", "3", "4"].includes(message)) {
       const data = await answerQuiz(message);
       addMessage(data.reply, "bot");
       return;
     }
 
-    // 3) Default: normal chatbot endpoint
+    // 3) Normal chat
     const data = await postJSON("/chat", { message });
     addMessage(data.reply, "bot");
+
   } catch (err) {
     addMessage("Error: could not reach the server. Please try again.", "bot");
   }
 };
+
 
 clearBtn.onclick = () => {
   chatbox.innerHTML = "";
@@ -107,4 +121,5 @@ clearBtn.onclick = () => {
 msgInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") sendBtn.click();
 });
+
 
