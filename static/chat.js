@@ -6,6 +6,10 @@ const clearBtn = document.getElementById("clear");
 // Track if quiz is active on the client side
 let quizActive = false;
 
+// Quiz topic selection mode (after showing quiz list)
+let quizSelectMode = false;     // true when user is choosing a quiz from the list
+let lastQuizTopics = [];        // topics from /quiz/list in the same order displayed
+
 async function getQuizList() {
   const res = await fetch("/quiz/list");
   return await res.json();
@@ -38,7 +42,6 @@ async function postJSON(url, payload) {
   return await res.json();
 }
 
-// Optional: start quiz with topic, default is number_systems
 async function startQuiz(topic = "number_systems") {
   const data = await postJSON("/quiz/start", { topic });
   quizActive = true;
@@ -48,13 +51,10 @@ async function startQuiz(topic = "number_systems") {
 async function answerQuiz(answer) {
   const data = await postJSON("/quiz/answer", { answer });
 
-  // If backend says quiz finished, we turn it off on client side too
-  if (typeof data.reply === "string" && data.reply.toLowerCase().includes("quiz finished")) {
-    quizActive = false;
-  }
-  // If backend says no quiz active, also turn off
-  if (typeof data.reply === "string" && data.reply.toLowerCase().includes("no quiz is active")) {
-    quizActive = false;
+  if (typeof data.reply === "string") {
+    const r = data.reply.toLowerCase();
+    if (r.includes("quiz finished")) quizActive = false;
+    if (r.includes("no quiz is active")) quizActive = false;
   }
 
   return data;
@@ -70,7 +70,7 @@ sendBtn.onclick = async () => {
   const lower = message.toLowerCase();
 
   try {
-    // ✅ INSERTED HERE
+    // ✅ 0) Show quiz list and enable number selection mode
     if (
       lower === "quiz" ||
       lower === "quiz list" ||
@@ -79,47 +79,73 @@ sendBtn.onclick = async () => {
     ) {
       const data = await getQuizList();
       addMessage(data.reply, "bot");
+
+      if (Array.isArray(data.topics) && data.topics.length > 0) {
+        quizSelectMode = true;
+        lastQuizTopics = data.topics;
+        addMessage("Reply with the quiz number to start it (e.g., 1).", "bot");
+      } else {
+        quizSelectMode = false;
+        lastQuizTopics = [];
+      }
       return;
     }
 
-    // 1) Start quiz command
+    // ✅ 0b) If user is choosing a quiz topic, allow number selection
+    // Important: This only runs when NOT currently taking a quiz.
+    if (!quizActive && quizSelectMode && /^\d+$/.test(message)) {
+      const choiceNum = parseInt(message, 10);
+
+      if (choiceNum >= 1 && choiceNum <= lastQuizTopics.length) {
+        const topic = lastQuizTopics[choiceNum - 1];
+        quizSelectMode = false; // exit selection mode
+        const data = await startQuiz(topic);
+        addMessage(data.reply, "bot");
+      } else {
+        addMessage(`Please enter a number between 1 and ${lastQuizTopics.length}.`, "bot");
+      }
+      return;
+    }
+
+    // ✅ 1) Start quiz command: "start quiz"
     if (lower === "start quiz") {
+      quizSelectMode = false;
       const data = await startQuiz("number_systems");
       addMessage(data.reply, "bot");
       return;
     }
 
-    // 1b) Start quiz by topic
+    // ✅ 1b) Start quiz by topic: "quiz <topic>"
     if (lower.startsWith("quiz ")) {
+      quizSelectMode = false;
       const topic = lower.replace("quiz ", "").trim();
       const data = await startQuiz(topic || "number_systems");
       addMessage(data.reply, "bot");
       return;
     }
 
-    // 2) Answer quiz
+    // ✅ 2) If quiz is active AND user typed 1-4, treat as answer
     if (quizActive && ["1", "2", "3", "4"].includes(message)) {
       const data = await answerQuiz(message);
       addMessage(data.reply, "bot");
       return;
     }
 
-    // 3) Normal chat
+    // ✅ 3) Default: normal chatbot endpoint
     const data = await postJSON("/chat", { message });
     addMessage(data.reply, "bot");
-
   } catch (err) {
     addMessage("Error: could not reach the server. Please try again.", "bot");
   }
 };
 
-
 clearBtn.onclick = () => {
   chatbox.innerHTML = "";
+  quizActive = false;
+  quizSelectMode = false;
+  lastQuizTopics = [];
 };
 
 msgInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") sendBtn.click();
 });
-
-
