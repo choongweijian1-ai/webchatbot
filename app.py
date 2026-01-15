@@ -59,12 +59,20 @@ def get_bot_response(user_text: str) -> str:
         if not pattern_lower:
             continue
 
-        if (
-            user_text == pattern_lower
-            or pattern_lower in user_text
-            or user_text in pattern_lower
-        ):
+# 1) exact match always allowed
+if user_text == pattern_lower:
+    return random.choice(intent.get("responses", [])) if intent.get("responses") else "OK."
+
+# 2) if user input is very short (like "hi"), DO NOT do substring matching
+        if len(user_text) <= 2:
+            continue
+        
+        # 3) otherwise allow substring match only one way (pattern inside user text)
+        #    (prevents "hi" matching "high")
+        if pattern_lower in user_text:
             return random.choice(intent.get("responses", [])) if intent.get("responses") else "OK."
+        
+                    return random.choice(intent.get("responses", [])) if intent.get("responses") else "OK."
 
     return random.choice(noanswer_intent.get("responses", ["Sorry, I didn't understand."]))
 
@@ -461,6 +469,7 @@ def quiz_by_category(category):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
