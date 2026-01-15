@@ -8,6 +8,23 @@ import re
 app = Flask(__name__)
 
 # ------------------- Load intents.json safely -------------------
+
+QUIZ_PATH = os.path.join(BASE_DIR, "quiz.json")  # <-- make sure filename matches exactly
+quiz_data = {}
+
+try:
+    with open(QUIZ_PATH, "r", encoding="utf-8") as f:
+        quiz_file = json.load(f)
+
+    # IMPORTANT: your JSON has {"quizzes": {...}}
+    quiz_data = quiz_file.get("quizzes", {})
+
+except FileNotFoundError:
+    quiz_data = {}
+except json.JSONDecodeError as e:
+    quiz_data = {}
+    print("❌ quiz.json invalid JSON:", e)
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INTENTS_PATH = os.path.join(BASE_DIR, "intents.json")
 
@@ -301,3 +318,4 @@ def quiz_by_category(category):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
