@@ -25,11 +25,10 @@ noanswer_intent = next(
 )
 
 # ------------------- Load quiz.json safely -------------------
-# IMPORTANT: filename must match EXACTLY (case-sensitive on Render)
-QUIZ_FILENAME = "QUIZ.json"  # change to "QUIZ.json" if your file is uppercase
+QUIZ_FILENAME = "QUIZ.json"  # must match exact case on Render
 QUIZ_PATH = os.path.join(BASE_DIR, QUIZ_FILENAME)
 
-quiz_data = {}   # { "number_systems": [...], "signals": [...], ... }
+quiz_data = {}
 quiz_error = None
 
 try:
@@ -90,12 +89,14 @@ def parse_explain_command(msg: str):
 
 
 # ------------------- Quiz command parsing -------------------
-# Commands:
-#   /quiz                           -> list categories
-#   /quiz <category>                -> show question 1
-#   /quiz <category> random         -> random question
-#   /quiz <category> <number>       -> question number (1-based)
 def parse_quiz_command(msg: str):
+    """
+    Commands:
+      /quiz
+      /quiz <category>
+      /quiz <category> random
+      /quiz <category> <number>
+    """
     if not msg:
         return None
 
@@ -133,14 +134,15 @@ def format_question_text(category: str, q_obj: dict, index_1based: int) -> str:
     return "\n".join(lines)
 
 
-# ------------------- Quiz answer handling (STEP 2) -------------------
+# ------------------- Quiz answer handling -------------------
 def is_quiz_answer(msg: str) -> bool:
     if not msg:
         return False
     s = msg.strip().lower()
     if s in {"a", "b", "c", "d"}:
         return True
-    return s.isdigit() and 1 <= int(s) <= 9  # supports 1..9
+    return s.isdigit() and 1 <= int(s) <= 9
+
 
 def normalize_answer(msg: str) -> str:
     """Map a/b/c/d to 1/2/3/4, keep digits as-is."""
@@ -148,11 +150,12 @@ def normalize_answer(msg: str) -> str:
     mapping = {"a": "1", "b": "2", "c": "3", "d": "4"}
     return mapping.get(s, s)
 
+
 def get_correct_option_number(q_obj: dict):
     """
-    Your QUIZ.json uses:
-      - "answer_index": 0-based index of the correct choice (0..len-1)
-    We return "1"/"2"/"3"/"4" (user-facing option numbers).
+    QUIZ.json uses:
+      - "answer_index": 0-based index of correct choice
+    Return: "1"/"2"/"3"/"4"
     """
     choices = q_obj.get("choices", [])
     ans_i = q_obj.get("answer_index", None)
@@ -168,23 +171,27 @@ def get_correct_option_number(q_obj: dict):
     if ans_i < 0 or ans_i >= len(choices):
         return None
 
-    return str(ans_i + 1)  # 0-based -> 1-based
+    return str(ans_i + 1)
+
 
 def start_quiz_state(category: str, q_index_0based: int):
-    """Store current quiz state in Flask session cookie."""
     session["quiz_active"] = True
     session["quiz_category"] = category
     session["quiz_index"] = int(q_index_0based)
+
 
 def clear_quiz_state():
     session.pop("quiz_active", None)
     session.pop("quiz_category", None)
     session.pop("quiz_index", None)
 
+
 def grade_quiz_answer(user_msg: str):
     """
-    Grades current quiz answer from session.
-    Keeps your strict quiz format.
+    Option A:
+    - Correct: ✅ + explanation, then go to next question
+    - Wrong: ❌ + explanation, then go to next question
+    - No repeating
     """
     category = session.get("quiz_category")
     idx0 = session.get("quiz_index")
@@ -208,21 +215,17 @@ def grade_quiz_answer(user_msg: str):
     explain = (q_obj.get("explain") or "").strip()
     explain_block = f"\n\nExplanation:\n{explain}" if explain else ""
 
-    if user_opt == correct_opt:
-        next_idx0 = idx0 + 1
+    status = "✅ Correct!" if user_opt == correct_opt else "❌ Incorrect."
 
-        if next_idx0 >= len(questions):
-            clear_quiz_state()
-            return {"type": "chat", "text": "✅ Correct!" + explain_block + "\n\n🏁 End of quiz."}
+    next_idx0 = idx0 + 1
+    if next_idx0 >= len(questions):
+        clear_quiz_state()
+        return {"type": "chat", "text": status + explain_block + "\n\n🏁 End of quiz."}
 
-        session["quiz_index"] = next_idx0
-        next_q = questions[next_idx0]
-        q_text = format_question_text(category, next_q, next_idx0 + 1)
-        return {"type": "chat", "text": "✅ Correct!" + explain_block + "\n\n" + q_text}
-
-    # Wrong -> repeat same question
-    q_text = format_question_text(category, q_obj, idx0 + 1)
-    return {"type": "chat", "text": "❌ Incorrect." + explain_block + "\n\n" + q_text}
+    session["quiz_index"] = next_idx0
+    next_q = questions[next_idx0]
+    q_text = format_question_text(category, next_q, next_idx0 + 1)
+    return {"type": "chat", "text": status + explain_block + "\n\n" + q_text}
 
 
 # ------------------- Chat API -------------------
@@ -231,7 +234,7 @@ def chat():
     payload = request.get_json(silent=True) or {}
     msg = payload.get("message", "")
 
-    # ✅ STEP 2: Intercept quiz answer FIRST (prevents Definition/Use/Why hijack)
+    # ✅ Intercept quiz answers FIRST
     if session.get("quiz_active") and is_quiz_answer(msg):
         return jsonify(grade_quiz_answer(msg))
 
