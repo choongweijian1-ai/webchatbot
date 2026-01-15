@@ -24,7 +24,7 @@ noanswer_intent = next(
     {"responses": ["Sorry, I didn't understand."]}
 )
 
-# ------------------- Load quiz.json safely -------------------
+# ------------------- Load QUIZ.json safely -------------------
 QUIZ_FILENAME = "QUIZ.json"  # must match exact case on Render
 QUIZ_PATH = os.path.join(BASE_DIR, QUIZ_FILENAME)
 
@@ -35,7 +35,10 @@ quiz_error = None
 try:
     with open(QUIZ_PATH, "r", encoding="utf-8") as f:
         quiz_file = json.load(f)
+
     quiz_data = quiz_file.get("quizzes", {})
+    quiz_menu = quiz_file.get("quiz_menu", {})  # ✅ IMPORTANT
+
 except FileNotFoundError:
     quiz_error = f"{QUIZ_FILENAME} not found in repo root."
     quiz_menu = {}
@@ -76,7 +79,6 @@ def get_bot_response(user_text: str) -> str:
             return random.choice(responses) if responses else "OK."
 
     # 2) If very short input, DO NOT attempt substring matching
-    #    This prevents "hi" matching "high" / "logic" / etc.
     if len(user_text) <= 2:
         return random.choice(noanswer_intent.get("responses", ["Sorry, I didn't understand."]))
 
@@ -146,11 +148,14 @@ def parse_quiz_command(msg: str):
 def format_question_text(category: str, q_obj: dict, index_1based: int) -> str:
     q = q_obj.get("q", "")
     choices = q_obj.get("choices", [])
-    lines = [f"📘 Quiz: {category}", f"Q{index_1based}. {q}"]
+    lines = [
+        f"📘 Quiz: {category}",
+        f"Q{index_1based}. {q}"
+    ]
     for i, c in enumerate(choices, start=1):
         lines.append(f"{i}) {c}")
     lines.append("")
-    lines.append("Tip: /quiz <category> <number>  OR  /quiz <category> random")
+    lines.append("Tip: reply 1-4 (or a/b/c/d). Use /quiz <category> random or /quiz <category> <number>.")
     return "\n".join(lines)
 
 
@@ -172,11 +177,7 @@ def normalize_answer(msg: str) -> str:
 
 
 def get_correct_option_number(q_obj: dict):
-    """
-    QUIZ.json uses:
-      - "answer_index": 0-based index of correct choice
-    Return: "1"/"2"/"3"/"4"
-    """
+    """Return correct option number as '1'.. based on answer_index (0-based)."""
     choices = q_obj.get("choices", [])
     ans_i = q_obj.get("answer_index", None)
 
@@ -199,8 +200,6 @@ def start_quiz_state(category: str, q_index_0based: int):
     session["quiz_active"] = True
     session["quiz_category"] = category
     session["quiz_index"] = int(q_index_0based)
-
-    # ✅ score tracking (only shown at end)
     session["quiz_correct"] = 0
     session["quiz_answered"] = 0
 
@@ -211,14 +210,10 @@ def clear_quiz_state():
     session.pop("quiz_index", None)
     session.pop("quiz_correct", None)
     session.pop("quiz_answered", None)
+    session.pop("awaiting_quiz_pick", None)  # ✅ IMPORTANT
 
 
 def grade_quiz_answer(user_msg: str):
-    """
-    - Correct or Wrong -> show ✅/❌ + explanation
-    - Always move to next question (no repeating)
-    - Show Grade ONLY when quiz ends
-    """
     category = session.get("quiz_category")
     idx0 = session.get("quiz_index")
 
@@ -238,7 +233,6 @@ def grade_quiz_answer(user_msg: str):
 
     user_opt = normalize_answer(user_msg)
 
-    # ----- scoring update (hidden until end) -----
     answered = int(session.get("quiz_answered", 0)) + 1
     correct = int(session.get("quiz_correct", 0))
 
@@ -249,16 +243,14 @@ def grade_quiz_answer(user_msg: str):
     session["quiz_answered"] = answered
     session["quiz_correct"] = correct
 
-    # ----- explanation -----
     explain = (q_obj.get("explain") or "").strip()
     explain_block = f"\n\nExplanation:\n{explain}" if explain else ""
 
     status = "✅ Correct!" if is_correct else "❌ Incorrect."
 
-    # Move to next question regardless
     next_idx0 = idx0 + 1
 
-    # ----- END OF QUIZ: show grade -----
+    # End quiz -> show grade
     if next_idx0 >= len(questions):
         percent = (correct / answered) * 100 if answered else 0.0
         grade_line = f"Grade: {correct}/{answered} ({percent:.0f}%)"
@@ -268,7 +260,7 @@ def grade_quiz_answer(user_msg: str):
             "text": status + explain_block + f"\n\n{grade_line}\n\n🏁 End of quiz."
         }
 
-    # ----- continue to next question (no grade yet) -----
+    # Continue
     session["quiz_index"] = next_idx0
     next_q = questions[next_idx0]
     q_text = format_question_text(category, next_q, next_idx0 + 1)
@@ -283,50 +275,68 @@ def chat():
     msg = payload.get("message", "")
     msg_clean = (msg or "").strip().lower()
 
-    # ✅ /clear command — clears quiz state (UI is cleared in JS)
-    # If you want /clear to ONLY clear quiz state, this is correct.
+    # /clear clears quiz state
     if msg_clean == "/clear":
         clear_quiz_state()
         return jsonify({"type": "chat", "text": "🧹 Cleared quiz state."})
 
-    # ✅ Intercept quiz answers FIRST
-    # Prevents "a/b/c/d/1/2/3" from being treated as intents while quiz is active
+    # ✅ Handle numeric menu selection after /quiz
+    if session.get("awaiting_quiz_pick") and msg_clean.isdigit():
+        session["awaiting_quiz_pick"] = False
+
+        category = quiz_menu.get(msg_clean) if isinstance(quiz_menu, dict) else None
+        if not category or category not in quiz_data:
+            return jsonify({"type": "chat", "text": "❌ Invalid selection. Type /quiz to see the menu again."})
+
+        questions = quiz_data.get(category, [])
+        if not questions:
+            clear_quiz_state()
+            return jsonify({"type": "chat", "text": f"No questions found in category: {category}."})
+
+        start_quiz_state(category, 0)
+        q_obj = questions[0]
+        if not get_correct_option_number(q_obj):
+            return jsonify({"type": "chat", "text": "❌ This question has no valid 'answer_index' field in QUIZ.json."})
+        return jsonify({"type": "chat", "text": format_question_text(category, q_obj, 1)})
+
+    # Intercept quiz answers first
     if session.get("quiz_active") and is_quiz_answer(msg):
         return jsonify(grade_quiz_answer(msg))
 
-    # 1) Explain commands
+    # Explain commands
     topic = parse_explain_command(msg)
     if topic:
         return jsonify({"type": "explain", "topic": topic})
 
-    # 2) Quiz commands
+    # Quiz commands
     quiz_cmd = parse_quiz_command(msg)
     if quiz_cmd:
         if quiz_error and not quiz_data:
             return jsonify({"type": "chat", "text": f"Quiz error: {quiz_error}"})
 
+        # /quiz -> show menu
         if quiz_cmd["mode"] == "list":
             clear_quiz_state()
-            session["awaiting_quiz_pick"] = True  # ✅ waiting for number
-        
+            session["awaiting_quiz_pick"] = True
+
             if not quiz_data:
                 return jsonify({"type": "chat", "text": "No quiz categories found."})
-        
+
             if isinstance(quiz_menu, dict) and quiz_menu:
                 lines = ["✅ Available quiz categories:"]
                 for k in sorted(quiz_menu.keys(), key=lambda x: int(x)):
                     lines.append(f"{k}. {quiz_menu[k]}")
                 lines.append("")
                 lines.append("Reply with a number (example: 6) to start.")
+                lines.append("Or type: /quiz number_systems")
                 return jsonify({"type": "chat", "text": "\n".join(lines)})
-        
-            # fallback (should not happen, but safe)
+
+            # fallback if no menu
             cat_list = "\n- " + "\n- ".join(sorted(quiz_data.keys()))
             return jsonify({
                 "type": "chat",
                 "text": f"✅ Available quiz categories:{cat_list}\n\nStart one like:\n/quiz number_systems"
             })
-
 
         category = quiz_cmd.get("category", "")
         if category not in quiz_data:
@@ -342,6 +352,7 @@ def chat():
             clear_quiz_state()
             return jsonify({"type": "chat", "text": f"No questions found in category: {category}."})
 
+        # random question
         if quiz_cmd["mode"] == "random":
             q_obj = random.choice(questions)
             idx0 = questions.index(q_obj)
@@ -350,6 +361,7 @@ def chat():
                 return jsonify({"type": "chat", "text": "❌ This question has no valid 'answer_index' field in QUIZ.json."})
             return jsonify({"type": "chat", "text": format_question_text(category, q_obj, idx0 + 1)})
 
+        # specific question number within category
         if quiz_cmd["mode"] == "number":
             qnum = quiz_cmd.get("qnum", 1)
             if qnum < 1 or qnum > len(questions):
@@ -361,14 +373,14 @@ def chat():
                 return jsonify({"type": "chat", "text": "❌ This question has no valid 'answer_index' field in QUIZ.json."})
             return jsonify({"type": "chat", "text": format_question_text(category, q_obj, qnum)})
 
-        # default: first question
+        # default: start from Q1
         q_obj = questions[0]
         start_quiz_state(category, 0)
         if not get_correct_option_number(q_obj):
             return jsonify({"type": "chat", "text": "❌ This question has no valid 'answer_index' field in QUIZ.json."})
         return jsonify({"type": "chat", "text": format_question_text(category, q_obj, 1)})
 
-    # 3) Normal chatbot
+    # Normal chatbot
     reply = get_bot_response(msg)
     return jsonify({"type": "chat", "text": reply})
 
@@ -476,6 +488,7 @@ def api_resistors():
 # ------------------- Quiz API (debug) -------------------
 @app.route("/api/quiz/categories", methods=["GET"])
 def quiz_categories():
+    # keep existing behavior (sorted categories)
     return jsonify({"categories": sorted(list(quiz_data.keys()))})
 
 
@@ -490,4 +503,3 @@ def quiz_by_category(category):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
-
