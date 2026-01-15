@@ -1,15 +1,15 @@
 {
   "quiz_menu": [
-    "adders_and_binary_addition",
-    "boolean_simplification",
-    "combinational_logic",
-    "kmap_and_dontcare",
-    "logic_levels",
-    "number_systems",
-    "seven_segment",
-    "signals",
-    "signed_numbers",
-    "sop_pos_terms"
+    "1": "adders_and_binary_addition",
+    "2": "boolean_simplification",
+    "3": "combinational_logic",
+    "4": "kmap_and_dontcare",
+    "5": "logic_levels",
+    "6": "number_systems",
+    "7": "seven_segment",
+    "8": "signals",
+    "9": "signed_numbers",
+    "10": "sop_pos_terms"
   ],
   "quizzes": {
     "number_systems": [
