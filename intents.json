@@ -1,6 +1,11 @@
 {
   "intents": [
     {
+      "tag": "quiz_answer",
+      "patterns": ["1", "2", "3", "4", "a", "b", "c", "d"],
+      "responses": ["__QUIZ_ANSWER__"]
+    }, 
+    {
       "tag": "greeting",
       "patterns": ["Hi", "Hello", "Hey", "Good morning", "Good evening"],
       "responses": [
@@ -330,6 +335,7 @@
     }
   ]
 }
+
 
 
 
