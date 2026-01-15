@@ -317,8 +317,18 @@ Outputs the opposite of the input.
 }
 
 // initial drawing
-drawSeriesCircuit();
-addLine("Bot", "Hi! Ask about Ohm’s law, logic gates, or resistors. Type /quiz to start.");
+
+window.addEventListener("DOMContentLoaded", () => {
+  drawSeriesCircuit();
+
+  addLine("Bot", `👋 Hi! Quick tips:
+- /quiz  (list categories)
+- Type a number after /quiz (example: 6)
+- /clear (reset quiz)
+Ask about Ohm’s law, logic gates, or resistors anytime.`);
+});
+
+
 
 
 
