@@ -23,7 +23,12 @@
       "patterns": ["Thanks", "Thank you", "I appreciate it", "Thanks a lot"],
       "responses": ["You’re welcome!", "No problem!", "Happy to help!"]
     },
-
+    {
+      "tag": "who",
+      "patterns": ["who", "who are you", "what are you"],
+      "responses": ["I am your Ai Based Learning Assistant", "I am a Chat Bot"
+      ]
+    },
     {
       "tag": "analog_signals",
       "patterns": [
@@ -325,6 +330,7 @@
     }
   ]
 }
+
 
 
 
