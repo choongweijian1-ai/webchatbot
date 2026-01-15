@@ -31,7 +31,6 @@
         "explain": "Binary is easy to differentiate (0V and Vcc) and is robust in noise rejection."
       }
     ],
-
     "signals": [
       {
         "q": "An analog signal output varies:",
@@ -58,7 +57,6 @@
         "explain": "Most real-world events are analog in nature."
       }
     ],
-
     "logic_levels": [
       {
         "q": "Logic devices interpret voltage levels as:",
@@ -79,7 +77,6 @@
         "explain": "TTL and CMOS have different voltage ranges for logic states."
       }
     ],
-
     "combinational_logic": [
       {
         "q": "A combinational logic circuit output depends on:",
@@ -94,7 +91,6 @@
         "explain": "Combinational circuits do not use feedback or storage elements."
       }
     ],
-
     "sop_pos_terms": [
       {
         "q": "SOP stands for:",
@@ -121,7 +117,6 @@
         "explain": "Maxterms correspond to rows where the output is 0."
       }
     ],
-
     "boolean_simplification": [
       {
         "q": "Boolean algebra is used to:",
@@ -147,13 +142,18 @@
         "explain": "(A + B)’ = A’ · B’."
       },
       {
+        "q": "De Morgan’s theorem: (A · B)’ equals:",
+        "choices": ["A’ + B’", "A’ · B’", "A · B", "A + B"],
+        "answer_index": 0,
+        "explain": "(A · B)’ = A’ + B’."
+      },
+      {
         "q": "Universal gates are:",
         "choices": ["XOR and XNOR", "AND and OR", "NAND and NOR", "NOT and XOR"],
         "answer_index": 2,
         "explain": "NAND and NOR are universal gates."
       }
     ],
-
     "kmap_and_dontcare": [
       {
         "q": "A Karnaugh Map (K-Map) is used to:",
@@ -168,15 +168,101 @@
         "explain": "K-Map groups contain 1, 2, 4, 8, etc. cells."
       },
       {
+        "q": "Groups in a K-Map must be:",
+        "choices": ["Diagonal only", "Horizontal or vertical", "Circular only", "Random"],
+        "answer_index": 1,
+        "explain": "Groups must be horizontal or vertical; they can overlap and wrap around."
+      },
+      {
         "q": "Don’t care conditions are represented by:",
         "choices": ["Z", "X", "U", "D"],
         "answer_index": 1,
         "explain": "Don’t care conditions are represented by X."
       }
     ],
-
     "seven_segment": [
       {
         "q": "A seven-segment display is used to display:",
         "choices": ["Only binary", "Decimal digits", "Hex letters only", "Analog signals"],
-        "answer_in_
+        "answer_index": 1,
+        "explain": "Seven-segment displays are used to display decimal digits."
+      },
+      {
+        "q": "Common-anode display: logic ____ turns ON a segment.",
+        "choices": ["1", "0", "X", "Undefined"],
+        "answer_index": 1,
+        "explain": "In a common-anode display, logic 0 turns ON a segment."
+      },
+      {
+        "q": "Common-cathode display: logic ____ turns ON a segment.",
+        "choices": ["1", "0", "X", "Undefined"],
+        "answer_index": 0,
+        "explain": "In a common-cathode display, logic 1 turns ON a segment."
+      }
+    ],
+    "adders_and_binary_addition": [
+      {
+        "q": "What is 1 + 1 in binary?",
+        "choices": ["0", "1", "10", "11"],
+        "answer_index": 2,
+        "explain": "1 + 1 = 10 in binary (sum 0, carry 1)."
+      },
+      {
+        "q": "A half adder adds:",
+        "choices": ["Two bits", "Three bits", "Four bits", "Only decimals"],
+        "answer_index": 0,
+        "explain": "A half adder adds two binary bits and outputs Sum and Carry-out."
+      },
+      {
+        "q": "A half adder cannot add:",
+        "choices": ["Two inputs", "Carry-in from previous stage", "Sum output", "Carry-out output"],
+        "answer_index": 1,
+        "explain": "A half adder cannot include a carry-in input."
+      },
+      {
+        "q": "A full adder adds:",
+        "choices": ["One bit", "Two bits only", "Three bits (A, B, Cin)", "Eight bits"],
+        "answer_index": 2,
+        "explain": "A full adder adds A, B, and Cin and outputs Sum and Carry-out."
+      },
+      {
+        "q": "A ripple carry adder is slower because carry:",
+        "choices": ["Is predicted", "Propagates sequentially", "Is removed", "Does not exist"],
+        "answer_index": 1,
+        "explain": "Ripple carry passes carry from one stage to the next sequentially, causing delay."
+      },
+      {
+        "q": "A look-ahead carry adder is faster because carry is:",
+        "choices": ["Waited for", "Predicted in parallel", "Ignored", "Always set to 1"],
+        "answer_index": 1,
+        "explain": "Look-ahead carry generates carry signals in parallel."
+      }
+    ],
+    "signed_numbers": [
+      {
+        "q": "In signed binary numbers, the MSB represents:",
+        "choices": ["Magnitude", "Base", "Sign", "Carry"],
+        "answer_index": 2,
+        "explain": "The MSB is the sign bit (0 positive, 1 negative)."
+      },
+      {
+        "q": "2’s complement is formed by:",
+        "choices": ["Inverting bits only", "Inverting bits and adding 1", "Adding 1 only", "Adding 2 only"],
+        "answer_index": 1,
+        "explain": "2’s complement is formed by inverting all bits and adding 1."
+      },
+      {
+        "q": "In 2’s complement subtraction, you subtract by:",
+        "choices": ["Dividing numbers", "Adding the 2’s complement of the number", "Ignoring the sign bit", "Using only XOR"],
+        "answer_index": 1,
+        "explain": "Subtraction is done by adding the 2’s complement; final carry-out is discarded."
+      },
+      {
+        "q": "Range of signed N-bit numbers is:",
+        "choices": ["0 to 2^N", "-(2^(N-1)) to (2^(N-1) - 1)", "-(2^N) to (2^N - 1)", "-N to +N"],
+        "answer_index": 1,
+        "explain": "For N bits: −(2^(N−1)) to (2^(N−1) − 1)."
+      }
+    ]
+  }
+}
