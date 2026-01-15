@@ -138,7 +138,9 @@ def is_quiz_answer(msg: str) -> bool:
     if not msg:
         return False
     s = msg.strip().lower()
-    return s in {"1", "2", "3", "4", "a", "b", "c", "d"}
+    if s in {"a", "b", "c", "d"}:
+        return True
+    return s.isdigit() and 1 <= int(s) <= 9  # supports 1..9
 
 def normalize_answer(msg: str) -> str:
     """Map a/b/c/d to 1/2/3/4, keep digits as-is."""
@@ -148,45 +150,25 @@ def normalize_answer(msg: str) -> str:
 
 def get_correct_option_number(q_obj: dict):
     """
-    Accepts quiz JSON formats like:
-      - "answer": 3         (means option 3)
-      - "answer": "3"       (means option 3)
-      - "answer": "10"      (means the correct choice text is "10")
-      - "answer": "c"       (means option 3)
-    Returns: "1"/"2"/"3"/"4" or None if cannot detect
+    Your QUIZ.json uses:
+      - "answer_index": 0-based index of the correct choice (0..len-1)
+    We return "1"/"2"/"3"/"4" (user-facing option numbers).
     """
-    ans = q_obj.get("answer", None)
     choices = q_obj.get("choices", [])
+    ans_i = q_obj.get("answer_index", None)
 
-    if ans is None:
+    if ans_i is None:
         return None
 
-    # If answer is int (1-4)
-    if isinstance(ans, int):
-        if 1 <= ans <= len(choices):
-            return str(ans)
+    try:
+        ans_i = int(ans_i)
+    except Exception:
         return None
 
-    # If answer is string
-    if isinstance(ans, str):
-        a = ans.strip().lower()
+    if ans_i < 0 or ans_i >= len(choices):
+        return None
 
-        # 'a'/'b'/'c'/'d'
-        if a in {"a", "b", "c", "d"}:
-            return normalize_answer(a)
-
-        # "1"/"2"/"3"/"4"
-        if a.isdigit():
-            # If it's a valid option number (1-4)
-            if 1 <= int(a) <= len(choices):
-                return a
-
-        # Otherwise treat it as correct choice TEXT, find which option matches
-        for idx, c in enumerate(choices, start=1):
-            if str(c).strip().lower() == a:
-                return str(idx)
-
-    return None
+    return str(ans_i + 1)  # 0-based -> 1-based
 
 def start_quiz_state(category: str, q_index_0based: int):
     """Store current quiz state in Flask session cookie."""
@@ -218,29 +200,29 @@ def grade_quiz_answer(user_msg: str):
 
     q_obj = questions[idx0]
     correct_opt = get_correct_option_number(q_obj)
-
     if not correct_opt:
-        # Your quiz JSON lacks a usable "answer"
-        return {"type": "chat", "text": "❌ This question has no valid 'answer' field in QUIZ.json."}
+        return {"type": "chat", "text": "❌ This question has no valid 'answer_index' field in QUIZ.json."}
 
     user_opt = normalize_answer(user_msg)
 
+    explain = (q_obj.get("explain") or "").strip()
+    explain_block = f"\n\nExplanation:\n{explain}" if explain else ""
+
     if user_opt == correct_opt:
-        # ✅ Correct -> go next question or end quiz
         next_idx0 = idx0 + 1
+
         if next_idx0 >= len(questions):
             clear_quiz_state()
-            return {"type": "chat", "text": "✅ Correct!\n\n🏁 End of quiz."}
+            return {"type": "chat", "text": "✅ Correct!" + explain_block + "\n\n🏁 End of quiz."}
 
-        # move to next question (same category)
         session["quiz_index"] = next_idx0
         next_q = questions[next_idx0]
         q_text = format_question_text(category, next_q, next_idx0 + 1)
-        return {"type": "chat", "text": "✅ Correct!\n\n" + q_text}
+        return {"type": "chat", "text": "✅ Correct!" + explain_block + "\n\n" + q_text}
 
-    # ❌ Wrong -> repeat same question (do NOT exit quiz)
+    # Wrong -> repeat same question
     q_text = format_question_text(category, q_obj, idx0 + 1)
-    return {"type": "chat", "text": "❌ Incorrect.\n\n" + q_text}
+    return {"type": "chat", "text": "❌ Incorrect." + explain_block + "\n\n" + q_text}
 
 
 # ------------------- Chat API -------------------
@@ -251,8 +233,7 @@ def chat():
 
     # ✅ STEP 2: Intercept quiz answer FIRST (prevents Definition/Use/Why hijack)
     if session.get("quiz_active") and is_quiz_answer(msg):
-        result = grade_quiz_answer(msg)
-        return jsonify(result)
+        return jsonify(grade_quiz_answer(msg))
 
     # 1) Explain commands
     topic = parse_explain_command(msg)
@@ -287,9 +268,8 @@ def chat():
             q_obj = random.choice(questions)
             idx0 = questions.index(q_obj)
             start_quiz_state(category, idx0)
-            # Validate answer exists
             if not get_correct_option_number(q_obj):
-                return jsonify({"type": "chat", "text": "❌ This question has no valid 'answer' field in QUIZ.json."})
+                return jsonify({"type": "chat", "text": "❌ This question has no valid 'answer_index' field in QUIZ.json."})
             return jsonify({"type": "chat", "text": format_question_text(category, q_obj, idx0 + 1)})
 
         if quiz_cmd["mode"] == "number":
@@ -300,14 +280,14 @@ def chat():
             q_obj = questions[idx0]
             start_quiz_state(category, idx0)
             if not get_correct_option_number(q_obj):
-                return jsonify({"type": "chat", "text": "❌ This question has no valid 'answer' field in QUIZ.json."})
+                return jsonify({"type": "chat", "text": "❌ This question has no valid 'answer_index' field in QUIZ.json."})
             return jsonify({"type": "chat", "text": format_question_text(category, q_obj, qnum)})
 
         # default: first question
         q_obj = questions[0]
         start_quiz_state(category, 0)
         if not get_correct_option_number(q_obj):
-            return jsonify({"type": "chat", "text": "❌ This question has no valid 'answer' field in QUIZ.json."})
+            return jsonify({"type": "chat", "text": "❌ This question has no valid 'answer_index' field in QUIZ.json."})
         return jsonify({"type": "chat", "text": format_question_text(category, q_obj, 1)})
 
     # 3) Normal chatbot
