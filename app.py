@@ -43,38 +43,47 @@ except json.JSONDecodeError as e:
     quiz_data = {}
 
 
+# ------------------- Bot response matcher -------------------
 def get_bot_response(user_text: str) -> str:
-    """Simple longest-pattern-first matcher (substring + equality)."""
+    """
+    Fixed:
+    - Proper indentation
+    - Exact-match first
+    - Prevent short inputs like "hi" from matching "high"
+    - Only do substring matching when user_text length > 2
+    - Only do one-way substring: pattern in user_text
+    """
     user_text = (user_text or "").lower().strip()
-    pattern_list = []
 
+    # Build patterns
+    pattern_list = []
     for intent in intents:
         for pattern in intent.get("patterns", []):
-            pattern_list.append((pattern.lower().strip(), intent))
+            p = (pattern or "").lower().strip()
+            if p:
+                pattern_list.append((p, intent))
 
     # Prefer longer patterns first so "series circuit" beats "series"
     pattern_list.sort(key=lambda x: len(x[0]), reverse=True)
 
+    # 1) Exact match first (works for "hi", "hello", etc.)
     for pattern_lower, intent in pattern_list:
-        if not pattern_lower:
-            continue
+        if user_text == pattern_lower:
+            responses = intent.get("responses", [])
+            return random.choice(responses) if responses else "OK."
 
-    # 1) exact match always allowed
-    if user_text == pattern_lower:
-        return random.choice(intent.get("responses", [])) if intent.get("responses") else "OK."
-    
-    # 2) if user input is very short (like "hi"), DO NOT do substring matching
-            if len(user_text) <= 2:
-                continue
-            
-            # 3) otherwise allow substring match only one way (pattern inside user text)
-            #    (prevents "hi" matching "high")
-            if pattern_lower in user_text:
-                return random.choice(intent.get("responses", [])) if intent.get("responses") else "OK."
-            
-                        return random.choice(intent.get("responses", [])) if intent.get("responses") else "OK."
-    
+    # 2) If very short input, DO NOT attempt substring matching
+    #    This prevents "hi" matching "high" / "logic" / etc.
+    if len(user_text) <= 2:
         return random.choice(noanswer_intent.get("responses", ["Sorry, I didn't understand."]))
+
+    # 3) Substring match (pattern must be inside user_text)
+    for pattern_lower, intent in pattern_list:
+        if pattern_lower in user_text:
+            responses = intent.get("responses", [])
+            return random.choice(responses) if responses else "OK."
+
+    return random.choice(noanswer_intent.get("responses", ["Sorry, I didn't understand."]))
 
 
 # ------------------- Pages -------------------
@@ -193,22 +202,16 @@ def start_quiz_state(category: str, q_index_0based: int):
     session["quiz_answered"] = 0
 
 
-
 def clear_quiz_state():
     session.pop("quiz_active", None)
     session.pop("quiz_category", None)
     session.pop("quiz_index", None)
-
-    # ✅ score tracking
     session.pop("quiz_correct", None)
     session.pop("quiz_answered", None)
 
 
-
-
 def grade_quiz_answer(user_msg: str):
     """
-    Option A:
     - Correct or Wrong -> show ✅/❌ + explanation
     - Always move to next question (no repeating)
     - Show Grade ONLY when quiz ends
@@ -275,22 +278,18 @@ def grade_quiz_answer(user_msg: str):
 def chat():
     payload = request.get_json(silent=True) or {}
     msg = payload.get("message", "")
-
     msg_clean = (msg or "").strip().lower()
 
-    # ✅ /clear command — clears chatbot + quiz state
+    # ✅ /clear command — clears quiz state (UI is cleared in JS)
+    # If you want /clear to ONLY clear quiz state, this is correct.
     if msg_clean == "/clear":
         clear_quiz_state()
-        return jsonify({
-            "type": "chat",
-            "text": "🧹 Chat cleared. Ask a question or type /quiz to start."
-        })
+        return jsonify({"type": "chat", "text": "🧹 Cleared quiz state."})
 
     # ✅ Intercept quiz answers FIRST
+    # Prevents "a/b/c/d/1/2/3" from being treated as intents while quiz is active
     if session.get("quiz_active") and is_quiz_answer(msg):
         return jsonify(grade_quiz_answer(msg))
-
-
 
     # 1) Explain commands
     topic = parse_explain_command(msg)
@@ -308,13 +307,19 @@ def chat():
             if not quiz_data:
                 return jsonify({"type": "chat", "text": "No quiz categories found."})
             cat_list = "\n- " + "\n- ".join(sorted(quiz_data.keys()))
-            return jsonify({"type": "chat", "text": f"✅ Available quiz categories:{cat_list}\n\nStart one like:\n/quiz number_systems"})
+            return jsonify({
+                "type": "chat",
+                "text": f"✅ Available quiz categories:{cat_list}\n\nStart one like:\n/quiz number_systems"
+            })
 
         category = quiz_cmd.get("category", "")
         if category not in quiz_data:
             clear_quiz_state()
             available = ", ".join(sorted(quiz_data.keys())) if quiz_data else "(none)"
-            return jsonify({"type": "chat", "text": f"❌ Unknown quiz category: {category}\nAvailable: {available}\n\nTry:\n/quiz"})
+            return jsonify({
+                "type": "chat",
+                "text": f"❌ Unknown quiz category: {category}\nAvailable: {available}\n\nTry:\n/quiz"
+            })
 
         questions = quiz_data[category]
         if not questions:
@@ -469,8 +474,3 @@ def quiz_by_category(category):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
-
-
-
-
-
