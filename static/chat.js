@@ -73,10 +73,11 @@ async function clearChat() {
     console.error(err);
   }
 
-  addLine("Bot", "🧹 Chat cleared. Ask a question or type /quiz to start.");
+  // ✅ Do NOT add any new line, keep it empty
+  chatInput.value = "";
+  chatInput.focus();
 }
 
-clearBtn.addEventListener("click", clearChat);
 
 
 
@@ -316,4 +317,5 @@ Outputs the opposite of the input.
 // initial drawing
 drawSeriesCircuit();
 addLine("Bot", "Hi! Ask about Ohm’s law, logic gates, or resistors. Type /quiz to start.");
+
 
