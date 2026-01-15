@@ -29,6 +29,7 @@ QUIZ_FILENAME = "QUIZ.json"  # must match exact case on Render
 QUIZ_PATH = os.path.join(BASE_DIR, QUIZ_FILENAME)
 
 quiz_data = {}
+quiz_menu = {}
 quiz_error = None
 
 try:
@@ -37,9 +38,11 @@ try:
     quiz_data = quiz_file.get("quizzes", {})
 except FileNotFoundError:
     quiz_error = f"{QUIZ_FILENAME} not found in repo root."
+    quiz_menu = {}
     quiz_data = {}
 except json.JSONDecodeError as e:
     quiz_error = f"{QUIZ_FILENAME} is not valid JSON: {e}"
+    quiz_menu = {}
     quiz_data = {}
 
 
@@ -304,13 +307,26 @@ def chat():
 
         if quiz_cmd["mode"] == "list":
             clear_quiz_state()
+            session["awaiting_quiz_pick"] = True  # ✅ waiting for number
+        
             if not quiz_data:
                 return jsonify({"type": "chat", "text": "No quiz categories found."})
+        
+            if isinstance(quiz_menu, dict) and quiz_menu:
+                lines = ["✅ Available quiz categories:"]
+                for k in sorted(quiz_menu.keys(), key=lambda x: int(x)):
+                    lines.append(f"{k}. {quiz_menu[k]}")
+                lines.append("")
+                lines.append("Reply with a number (example: 6) to start.")
+                return jsonify({"type": "chat", "text": "\n".join(lines)})
+        
+            # fallback (should not happen, but safe)
             cat_list = "\n- " + "\n- ".join(sorted(quiz_data.keys()))
             return jsonify({
                 "type": "chat",
                 "text": f"✅ Available quiz categories:{cat_list}\n\nStart one like:\n/quiz number_systems"
             })
+
 
         category = quiz_cmd.get("category", "")
         if category not in quiz_data:
@@ -474,3 +490,4 @@ def quiz_by_category(category):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
