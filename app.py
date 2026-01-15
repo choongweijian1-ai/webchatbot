@@ -42,6 +42,17 @@ def get_bot_response(user_text: str) -> str:
             return random.choice(intent.get("responses", [])) if intent.get("responses") else "OK."
 
     return random.choice(noanswer_intent.get("responses", ["Sorry, I didn't understand."]))
+# ------------------- Load QUIZ.json safely -------------------
+QUIZ_PATH = os.path.join(BASE_DIR, "QUIZ.json")
+quiz_data = {}
+
+try:
+    with open(QUIZ_PATH, "r", encoding="utf-8") as f:
+        quiz_data = json.load(f)
+except FileNotFoundError:
+    quiz_data = {"error": "QUIZ.json not found. Please add it to the repo root."}
+except json.JSONDecodeError:
+    quiz_data = {"error": "QUIZ.json is not valid JSON. Please fix formatting."}
 
 
 # ------------------- Pages -------------------
@@ -202,14 +213,10 @@ def api_resistors():
 
     return jsonify({"result": "\n".join(out)})
 
-# ------------------- Load QUIZ.json -------------------
-QUIZ_PATH = os.path.join(BASE_DIR, "QUIZ.json")
-
-with open(QUIZ_PATH, "r", encoding="utf-8") as f:
-    quiz_data = json.load(f)
 
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
