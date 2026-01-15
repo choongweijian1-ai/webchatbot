@@ -268,9 +268,21 @@ def chat():
     payload = request.get_json(silent=True) or {}
     msg = payload.get("message", "")
 
+    msg_clean = (msg or "").strip().lower()
+
+    # ✅ /clear command — clears chatbot + quiz state
+    if msg_clean == "/clear":
+        clear_quiz_state()
+        return jsonify({
+            "type": "chat",
+            "text": "🧹 Chat cleared. Ask a question or type /quiz to start."
+        })
+
     # ✅ Intercept quiz answers FIRST
     if session.get("quiz_active") and is_quiz_answer(msg):
         return jsonify(grade_quiz_answer(msg))
+
+
 
     # 1) Explain commands
     topic = parse_explain_command(msg)
@@ -449,5 +461,6 @@ def quiz_by_category(category):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
