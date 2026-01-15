@@ -26,8 +26,7 @@
     {
       "tag": "who",
       "patterns": ["who", "who are you", "what are you"],
-      "responses": ["I am your Ai Based Learning Assistant", "I am a Chat Bot"
-      ]
+      "responses": ["I am your Ai Based Learning Assistant", "I am a Chat Bot"]
     },
     {
       "tag": "analog_signals",
@@ -321,9 +320,7 @@
     {
       "tag": "quizes",
       "patterns": ["quiz", "test"],
-      "responses":[
-        "Pls type '/quiz' to start"
-      ]
+      "responses": ["Pls type '/quiz' to start"]
     },
     {
       "tag": "noanswer",
@@ -336,14 +333,3 @@
     }
   ]
 }
-
-
-
-
-
-
-
-
-
-
-
