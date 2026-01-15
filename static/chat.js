@@ -17,13 +17,28 @@ async function sendChat() {
   addLine("You", msg);
   chatInput.value = "";
 
-  const res = await fetch("/chat", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({message: msg})
-  });
+  let res;
+  try {
+    res = await fetch("/chat", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      credentials: "same-origin", // 🔑 REQUIRED for Flask sessions (quiz)
+      body: JSON.stringify({message: msg})
+    });
+  } catch (err) {
+    console.error(err);
+    addLine("Bot", "⚠️ Network error. Please try again.");
+    return;
+  }
 
-  const data = await res.json();
+  let data;
+  try {
+    data = await res.json();
+  } catch (err) {
+    console.error(err);
+    addLine("Bot", "⚠️ Server returned invalid response.");
+    return;
+  }
 
   if (data.type === "explain") {
     // Update panel text + draw related gate/circuit if desired
@@ -49,6 +64,7 @@ document.getElementById("calcOhmBtn").addEventListener("click", async () => {
   const res = await fetch("/api/ohm", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
+    credentials: "same-origin",
     body: JSON.stringify({V, I, R})
   });
 
@@ -62,6 +78,7 @@ document.getElementById("calcResBtn").addEventListener("click", async () => {
   const res = await fetch("/api/resistors", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
+    credentials: "same-origin",
     body: JSON.stringify({values})
   });
 
@@ -273,4 +290,4 @@ Outputs the opposite of the input.
 
 // initial drawing
 drawSeriesCircuit();
-addLine("Bot", "Hi! Ask about Ohm’s law, logic gates, or resistors.");
+addLine("Bot", "Hi! Ask about Ohm’s law, logic gates, or resistors. Type /quiz to start.");
