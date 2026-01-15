@@ -15,7 +15,22 @@ with open(INTENTS_PATH, "r", encoding="utf-8") as f:
     data = json.load(f)
 
 intents = data.get("intents", [])
-noanswer_intent = next((i for i in intents if i.get("tag") == "noanswer"), {"responses": ["Sorry, I didn't understand."]})
+noanswer_intent = next(
+    (i for i in intents if i.get("tag") == "noanswer"),
+    {"responses": ["Sorry, I didn't understand."]}
+)
+
+# ------------------- Load QUIZ.json safely -------------------
+QUIZ_PATH = os.path.join(BASE_DIR, "QUIZ.json")
+quiz_data = {}
+
+try:
+    with open(QUIZ_PATH, "r", encoding="utf-8") as f:
+        quiz_data = json.load(f)
+except FileNotFoundError:
+    quiz_data = {"quizzes": {}, "error": "QUIZ.json not found in repo root."}
+except json.JSONDecodeError:
+    quiz_data = {"quizzes": {}, "error": "QUIZ.json is not valid JSON (check commas/quotes)."}
 
 
 def get_bot_response(user_text: str) -> str:
@@ -42,23 +57,11 @@ def get_bot_response(user_text: str) -> str:
             return random.choice(intent.get("responses", [])) if intent.get("responses") else "OK."
 
     return random.choice(noanswer_intent.get("responses", ["Sorry, I didn't understand."]))
-# ------------------- Load QUIZ.json safely -------------------
-QUIZ_PATH = os.path.join(BASE_DIR, "QUIZ.json")
-quiz_data = {}
-
-try:
-    with open(QUIZ_PATH, "r", encoding="utf-8") as f:
-        quiz_data = json.load(f)
-except FileNotFoundError:
-    quiz_data = {"error": "QUIZ.json not found. Please add it to the repo root."}
-except json.JSONDecodeError:
-    quiz_data = {"error": "QUIZ.json is not valid JSON. Please fix formatting."}
 
 
 # ------------------- Pages -------------------
 @app.route("/")
 def home():
-    # templates/index.html
     return render_template("index.html")
 
 
@@ -66,10 +69,6 @@ def home():
 EXPLAIN_TOPICS = {"ohm", "and", "or", "not"}
 
 def parse_explain_command(msg: str):
-    """
-    Recognize: "explain ohm", "explain and", etc.
-    Returns topic string or None.
-    """
     if not msg:
         return None
     m = re.match(r"^\s*explain\s+([a-zA-Z']+)\s*$", msg.strip().lower())
@@ -86,12 +85,9 @@ def chat():
 
     topic = parse_explain_command(msg)
     if topic:
-        # Frontend (static/app.js) expects: {type:"explain", topic:"ohm"}
         return jsonify({"type": "explain", "topic": topic})
 
-    # Otherwise normal chatbot reply
     reply = get_bot_response(msg)
-    # Frontend expects: {type:"chat", text:"..."}
     return jsonify({"type": "chat", "text": reply})
 
 
@@ -110,15 +106,6 @@ def _to_float(x):
 
 @app.route("/api/ohm", methods=["POST"])
 def api_ohm():
-    """
-    Accepts JSON: {V, I, R}
-    Compute the missing value if exactly 2 are provided.
-
-    Ohm's Law:
-      V = I * R
-      I = V / R
-      R = V / I
-    """
     payload = request.get_json(silent=True) or {}
     V = _to_float(payload.get("V"))
     I = _to_float(payload.get("I"))
@@ -133,19 +120,14 @@ def api_ohm():
         return jsonify({"result": "Please provide ONLY two values. Clear the third box and try again."})
 
     if V is None:
-        # V = I*R
-        if I is None or R is None:
-            return jsonify({"result": "Invalid input."})
         Vcalc = I * R
         return jsonify({"result": f"Using V = I × R\nV = {I} × {R} = {Vcalc:.4g} V"})
     if I is None:
-        # I = V/R
         if R == 0:
             return jsonify({"result": "R cannot be 0 for I = V/R."})
         Icalc = V / R
         return jsonify({"result": f"Using I = V ÷ R\nI = {V} ÷ {R} = {Icalc:.4g} A"})
 
-    # R is None
     if I == 0:
         return jsonify({"result": "I cannot be 0 for R = V/I."})
     Rcalc = V / I
@@ -154,7 +136,6 @@ def api_ohm():
 
 # ------------------- Resistor API -------------------
 def parse_resistor_values(values: str):
-    """Parse a comma-separated list like '10, 5, 20' -> [10.0, 5.0, 20.0]."""
     if not values:
         return []
     parts = [p.strip() for p in str(values).split(",")]
@@ -165,7 +146,7 @@ def parse_resistor_values(values: str):
         try:
             nums.append(float(p))
         except Exception:
-            return None  # parsing error
+            return None
     return nums
 
 
@@ -184,10 +165,6 @@ def parallel_resistance(rs):
 
 @app.route("/api/resistors", methods=["POST"])
 def api_resistors():
-    """
-    Accepts JSON: {values: "10,5,20"}
-    Returns BOTH series and parallel totals (UI doesn't pick mode).
-    """
     payload = request.get_json(silent=True) or {}
     values = payload.get("values", "")
     rs = parse_resistor_values(values)
@@ -213,13 +190,31 @@ def api_resistors():
 
     return jsonify({"result": "\n".join(out)})
 
-@app.route("/api/quiz", methods=["GET"])
-def get_quiz():
-    return jsonify(quiz_data)
+
+# ------------------- Quiz API -------------------
+@app.route("/api/quiz/categories", methods=["GET"])
+def quiz_categories():
+    quizzes = quiz_data.get("quizzes", {})
+    return jsonify({"categories": sorted(list(quizzes.keys()))})
+
+
+@app.route("/api/quiz/<category>", methods=["GET"])
+def quiz_by_category(category):
+    quizzes = quiz_data.get("quizzes", {})
+    if category not in quizzes:
+        return jsonify({"error": "Unknown quiz category", "available": sorted(list(quizzes.keys()))}), 404
+    return jsonify({"category": category, "questions": quizzes[category]})
+
+
+@app.route("/api/quiz/<category>/random", methods=["GET"])
+def quiz_random_question(category):
+    quizzes = quiz_data.get("quizzes", {})
+    if category not in quizzes or not quizzes[category]:
+        return jsonify({"error": "Unknown or empty quiz category"}), 404
+    q = random.choice(quizzes[category])
+    return jsonify({"category": category, "question": q})
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
-
-
-
