@@ -155,7 +155,7 @@ def format_question_text(category: str, q_obj: dict, index_1based: int) -> str:
     for i, c in enumerate(choices, start=1):
         lines.append(f"{i}) {c}")
     lines.append("")
-    lines.append("Tip: reply 1-4 (or a/b/c/d). Use /quiz <category> random or /quiz <category> <number>.")
+    lines.append("Tip: reply 1-4")
     return "\n".join(lines)
 
 
@@ -503,3 +503,4 @@ def quiz_by_category(category):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
