@@ -320,8 +320,8 @@
     },
     {
       "tag": "quizes",
-      "patterns"; ["quiz", "test"],
-      "responses";[
+      "patterns": ["quiz", "test"],
+      "responses":[
         "Pls type '/quiz' to start"
         
 
@@ -336,6 +336,7 @@
     }
   ]
 }
+
 
 
 
