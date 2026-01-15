@@ -323,8 +323,8 @@
       "patterns": ["quiz", "test"],
       "responses":[
         "Pls type '/quiz' to start"
-        
-
+      ]
+    },
     {
       "tag": "noanswer",
       "patterns": [],
@@ -336,6 +336,7 @@
     }
   ]
 }
+
 
 
 
