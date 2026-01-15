@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, session
 import json
 import random
 import os
@@ -6,6 +6,9 @@ import math
 import re
 
 app = Flask(__name__)
+
+# ✅ REQUIRED for Flask session storage (quiz state)
+app.secret_key = os.environ.get("SECRET_KEY", "dev_secret_key_change_me")
 
 # ------------------- Base directory -------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -130,11 +133,126 @@ def format_question_text(category: str, q_obj: dict, index_1based: int) -> str:
     return "\n".join(lines)
 
 
+# ------------------- Quiz answer handling (STEP 2) -------------------
+def is_quiz_answer(msg: str) -> bool:
+    if not msg:
+        return False
+    s = msg.strip().lower()
+    return s in {"1", "2", "3", "4", "a", "b", "c", "d"}
+
+def normalize_answer(msg: str) -> str:
+    """Map a/b/c/d to 1/2/3/4, keep digits as-is."""
+    s = msg.strip().lower()
+    mapping = {"a": "1", "b": "2", "c": "3", "d": "4"}
+    return mapping.get(s, s)
+
+def get_correct_option_number(q_obj: dict):
+    """
+    Accepts quiz JSON formats like:
+      - "answer": 3         (means option 3)
+      - "answer": "3"       (means option 3)
+      - "answer": "10"      (means the correct choice text is "10")
+      - "answer": "c"       (means option 3)
+    Returns: "1"/"2"/"3"/"4" or None if cannot detect
+    """
+    ans = q_obj.get("answer", None)
+    choices = q_obj.get("choices", [])
+
+    if ans is None:
+        return None
+
+    # If answer is int (1-4)
+    if isinstance(ans, int):
+        if 1 <= ans <= len(choices):
+            return str(ans)
+        return None
+
+    # If answer is string
+    if isinstance(ans, str):
+        a = ans.strip().lower()
+
+        # 'a'/'b'/'c'/'d'
+        if a in {"a", "b", "c", "d"}:
+            return normalize_answer(a)
+
+        # "1"/"2"/"3"/"4"
+        if a.isdigit():
+            # If it's a valid option number (1-4)
+            if 1 <= int(a) <= len(choices):
+                return a
+
+        # Otherwise treat it as correct choice TEXT, find which option matches
+        for idx, c in enumerate(choices, start=1):
+            if str(c).strip().lower() == a:
+                return str(idx)
+
+    return None
+
+def start_quiz_state(category: str, q_index_0based: int):
+    """Store current quiz state in Flask session cookie."""
+    session["quiz_active"] = True
+    session["quiz_category"] = category
+    session["quiz_index"] = int(q_index_0based)
+
+def clear_quiz_state():
+    session.pop("quiz_active", None)
+    session.pop("quiz_category", None)
+    session.pop("quiz_index", None)
+
+def grade_quiz_answer(user_msg: str):
+    """
+    Grades current quiz answer from session.
+    Keeps your strict quiz format.
+    """
+    category = session.get("quiz_category")
+    idx0 = session.get("quiz_index")
+
+    if not category or category not in quiz_data or idx0 is None:
+        clear_quiz_state()
+        return {"type": "chat", "text": "❌ Quiz session lost. Start again with:\n/quiz"}
+
+    questions = quiz_data.get(category, [])
+    if not questions or idx0 < 0 or idx0 >= len(questions):
+        clear_quiz_state()
+        return {"type": "chat", "text": "❌ Quiz question not found. Start again with:\n/quiz"}
+
+    q_obj = questions[idx0]
+    correct_opt = get_correct_option_number(q_obj)
+
+    if not correct_opt:
+        # Your quiz JSON lacks a usable "answer"
+        return {"type": "chat", "text": "❌ This question has no valid 'answer' field in QUIZ.json."}
+
+    user_opt = normalize_answer(user_msg)
+
+    if user_opt == correct_opt:
+        # ✅ Correct -> go next question or end quiz
+        next_idx0 = idx0 + 1
+        if next_idx0 >= len(questions):
+            clear_quiz_state()
+            return {"type": "chat", "text": "✅ Correct!\n\n🏁 End of quiz."}
+
+        # move to next question (same category)
+        session["quiz_index"] = next_idx0
+        next_q = questions[next_idx0]
+        q_text = format_question_text(category, next_q, next_idx0 + 1)
+        return {"type": "chat", "text": "✅ Correct!\n\n" + q_text}
+
+    # ❌ Wrong -> repeat same question (do NOT exit quiz)
+    q_text = format_question_text(category, q_obj, idx0 + 1)
+    return {"type": "chat", "text": "❌ Incorrect.\n\n" + q_text}
+
+
 # ------------------- Chat API -------------------
 @app.route("/chat", methods=["POST"])
 def chat():
     payload = request.get_json(silent=True) or {}
     msg = payload.get("message", "")
+
+    # ✅ STEP 2: Intercept quiz answer FIRST (prevents Definition/Use/Why hijack)
+    if session.get("quiz_active") and is_quiz_answer(msg):
+        result = grade_quiz_answer(msg)
+        return jsonify(result)
 
     # 1) Explain commands
     topic = parse_explain_command(msg)
@@ -148,6 +266,7 @@ def chat():
             return jsonify({"type": "chat", "text": f"Quiz error: {quiz_error}"})
 
         if quiz_cmd["mode"] == "list":
+            clear_quiz_state()
             if not quiz_data:
                 return jsonify({"type": "chat", "text": "No quiz categories found."})
             cat_list = "\n- " + "\n- ".join(sorted(quiz_data.keys()))
@@ -155,27 +274,40 @@ def chat():
 
         category = quiz_cmd.get("category", "")
         if category not in quiz_data:
+            clear_quiz_state()
             available = ", ".join(sorted(quiz_data.keys())) if quiz_data else "(none)"
             return jsonify({"type": "chat", "text": f"❌ Unknown quiz category: {category}\nAvailable: {available}\n\nTry:\n/quiz"})
 
         questions = quiz_data[category]
         if not questions:
+            clear_quiz_state()
             return jsonify({"type": "chat", "text": f"No questions found in category: {category}."})
 
         if quiz_cmd["mode"] == "random":
             q_obj = random.choice(questions)
-            idx = questions.index(q_obj) + 1
-            return jsonify({"type": "chat", "text": format_question_text(category, q_obj, idx)})
+            idx0 = questions.index(q_obj)
+            start_quiz_state(category, idx0)
+            # Validate answer exists
+            if not get_correct_option_number(q_obj):
+                return jsonify({"type": "chat", "text": "❌ This question has no valid 'answer' field in QUIZ.json."})
+            return jsonify({"type": "chat", "text": format_question_text(category, q_obj, idx0 + 1)})
 
         if quiz_cmd["mode"] == "number":
             qnum = quiz_cmd.get("qnum", 1)
             if qnum < 1 or qnum > len(questions):
                 return jsonify({"type": "chat", "text": f"Question number out of range. Pick 1 to {len(questions)}."})
-            q_obj = questions[qnum - 1]
+            idx0 = qnum - 1
+            q_obj = questions[idx0]
+            start_quiz_state(category, idx0)
+            if not get_correct_option_number(q_obj):
+                return jsonify({"type": "chat", "text": "❌ This question has no valid 'answer' field in QUIZ.json."})
             return jsonify({"type": "chat", "text": format_question_text(category, q_obj, qnum)})
 
         # default: first question
         q_obj = questions[0]
+        start_quiz_state(category, 0)
+        if not get_correct_option_number(q_obj):
+            return jsonify({"type": "chat", "text": "❌ This question has no valid 'answer' field in QUIZ.json."})
         return jsonify({"type": "chat", "text": format_question_text(category, q_obj, 1)})
 
     # 3) Normal chatbot
@@ -300,4 +432,3 @@ def quiz_by_category(category):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
-
