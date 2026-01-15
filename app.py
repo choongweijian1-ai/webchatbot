@@ -23,7 +23,7 @@ noanswer_intent = next(
 
 # ------------------- Load quiz.json safely -------------------
 # IMPORTANT: filename must match EXACTLY (case-sensitive on Render)
-QUIZ_FILENAME = "quiz.json"  # change to "QUIZ.json" if your file is uppercase
+QUIZ_FILENAME = "QUIZ.json"  # change to "QUIZ.json" if your file is uppercase
 QUIZ_PATH = os.path.join(BASE_DIR, QUIZ_FILENAME)
 
 quiz_data = {}   # { "number_systems": [...], "signals": [...], ... }
@@ -300,3 +300,4 @@ def quiz_by_category(category):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
