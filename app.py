@@ -65,7 +65,7 @@ def home():
     return render_template("index.html")
 
 
-# ------------------- Chat API -------------------
+# ------------------- Explain commands -------------------
 EXPLAIN_TOPICS = {"ohm", "and", "or", "not"}
 
 def parse_explain_command(msg: str):
@@ -78,15 +78,106 @@ def parse_explain_command(msg: str):
     return topic if topic in EXPLAIN_TOPICS else None
 
 
+# ------------------- Quiz command parsing (prevents mixing with intents) -------------------
+# Commands:
+#   /quiz                           -> list categories
+#   /quiz <category>                -> show question 1
+#   /quiz <category> random         -> random question
+#   /quiz <category> <number>       -> question number (1-based)
+def parse_quiz_command(msg: str):
+    if not msg:
+        return None
+
+    msg = msg.strip()
+    if not msg.lower().startswith("/quiz"):
+        return None
+
+    parts = msg.strip().split()
+    # parts[0] is "/quiz"
+    if len(parts) == 1:
+        return {"mode": "list"}
+
+    category = parts[1].strip().lower()
+
+    if len(parts) >= 3 and parts[2].strip().lower() == "random":
+        return {"mode": "random", "category": category}
+
+    if len(parts) >= 3:
+        # try parse question number
+        try:
+            qnum = int(parts[2])
+            return {"mode": "number", "category": category, "qnum": qnum}
+        except Exception:
+            # unknown third argument
+            return {"mode": "category", "category": category}
+
+    return {"mode": "category", "category": category}
+
+
+def format_question_text(category: str, q_obj: dict, index_1based: int) -> str:
+    q = q_obj.get("q", "")
+    choices = q_obj.get("choices", [])
+    lines = [f"📘 Quiz: {category}", f"Q{index_1based}. {q}"]
+    for i, c in enumerate(choices, start=1):
+        lines.append(f"{i}) {c}")
+    lines.append("")  # spacer
+    lines.append("Tip: Use /quiz <category> <number> to go to another question, or /quiz <category> random.")
+    return "\n".join(lines)
+
+
+# ------------------- Chat API -------------------
 @app.route("/chat", methods=["POST"])
 def chat():
     payload = request.get_json(silent=True) or {}
     msg = payload.get("message", "")
 
+    # 1) Explain commands first
     topic = parse_explain_command(msg)
     if topic:
         return jsonify({"type": "explain", "topic": topic})
 
+    # 2) Quiz commands next (so they DON'T get handled by intents)
+    quiz_cmd = parse_quiz_command(msg)
+    if quiz_cmd:
+        quizzes = quiz_data.get("quizzes", {}) if isinstance(quiz_data, dict) else {}
+
+        # Handle load errors gracefully
+        if "error" in quiz_data and not quizzes:
+            return jsonify({"type": "chat", "text": f"Quiz error: {quiz_data['error']}"})
+
+        if quiz_cmd["mode"] == "list":
+            if not quizzes:
+                return jsonify({"type": "chat", "text": "No quiz categories found in QUIZ.json."})
+            cat_list = "\n- " + "\n- ".join(sorted(quizzes.keys()))
+            return jsonify({"type": "chat", "text": f"✅ Available quiz categories:{cat_list}\n\nStart one like:\n/quiz number_systems"})
+
+        category = quiz_cmd.get("category", "")
+        if category not in quizzes:
+            available = ", ".join(sorted(quizzes.keys())) if quizzes else "(none)"
+            return jsonify({"type": "chat", "text": f"❌ Unknown quiz category: {category}\nAvailable: {available}\n\nTry:\n/quiz"})
+
+        questions = quizzes[category]
+        if not questions:
+            return jsonify({"type": "chat", "text": f"No questions found in category: {category}."})
+
+        if quiz_cmd["mode"] == "random":
+            q_obj = random.choice(questions)
+            # Find its index for display (optional)
+            idx = questions.index(q_obj) + 1
+            return jsonify({"type": "chat", "text": format_question_text(category, q_obj, idx)})
+
+        if quiz_cmd["mode"] == "number":
+            qnum = quiz_cmd.get("qnum", 1)
+            if qnum < 1 or qnum > len(questions):
+                return jsonify({"type": "chat", "text": f"Question number out of range. Pick 1 to {len(questions)}."})
+            q_obj = questions[qnum - 1]
+            return jsonify({"type": "chat", "text": format_question_text(category, q_obj, qnum)})
+
+        # default: show first question
+        q_obj = questions[0]
+        return jsonify({"type": "chat", "text": format_question_text(category, q_obj, 1)})
+
+    # 3) Otherwise normal chatbot
     reply = get_bot_response(msg)
     return jsonify({"type": "chat", "text": reply})
 
@@ -191,7 +282,7 @@ def api_resistors():
     return jsonify({"result": "\n".join(out)})
 
 
-# ------------------- Quiz API -------------------
+# ------------------- Quiz API (optional, still useful for debugging) -------------------
 @app.route("/api/quiz/categories", methods=["GET"])
 def quiz_categories():
     quizzes = quiz_data.get("quizzes", {})
@@ -201,18 +292,10 @@ def quiz_categories():
 @app.route("/api/quiz/<category>", methods=["GET"])
 def quiz_by_category(category):
     quizzes = quiz_data.get("quizzes", {})
+    category = category.lower().strip()
     if category not in quizzes:
         return jsonify({"error": "Unknown quiz category", "available": sorted(list(quizzes.keys()))}), 404
     return jsonify({"category": category, "questions": quizzes[category]})
-
-
-@app.route("/api/quiz/<category>/random", methods=["GET"])
-def quiz_random_question(category):
-    quizzes = quiz_data.get("quizzes", {})
-    if category not in quizzes or not quizzes[category]:
-        return jsonify({"error": "Unknown or empty quiz category"}), 404
-    q = random.choice(quizzes[category])
-    return jsonify({"category": category, "question": q})
 
 
 if __name__ == "__main__":
