@@ -1,5 +1,5 @@
 {
-  "quiz_menu": [
+  "quiz_menu": {
     "1": "adders_and_binary_addition",
     "2": "boolean_simplification",
     "3": "combinational_logic",
@@ -10,7 +10,7 @@
     "8": "signals",
     "9": "signed_numbers",
     "10": "sop_pos_terms"
-  ],
+  },
   "quizzes": {
     "number_systems": [
       {
