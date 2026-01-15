@@ -7,26 +7,42 @@ import re
 
 app = Flask(__name__)
 
-# ------------------- Load intents.json safely -------------------
 
-QUIZ_PATH = os.path.join(BASE_DIR, "quiz.json")  # <-- make sure filename matches exactly
-quiz_data = {}
+# ------------------- Base directory -------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# ------------------- Load intents.json safely -------------------
+INTENTS_PATH = os.path.join(BASE_DIR, "intents.json")
+with open(INTENTS_PATH, "r", encoding="utf-8") as f:
+    data = json.load(f)
+
+intents = data.get("intents", [])
+noanswer_intent = next(
+    (i for i in intents if i.get("tag") == "noanswer"),
+    {"responses": ["Sorry, I didn't understand."]}
+)
+
+# ------------------- Load quiz.json safely -------------------
+# IMPORTANT: choose ONE filename and stick to it (quiz.json OR QUIZ.json)
+QUIZ_FILENAME = "quiz.json"   # <-- change to "QUIZ.json" if that is your actual file name
+QUIZ_PATH = os.path.join(BASE_DIR, QUIZ_FILENAME)
+
+quiz_data = {}   # this will be the inner dict: { "number_systems": [...], ... }
+quiz_error = None
 
 try:
     with open(QUIZ_PATH, "r", encoding="utf-8") as f:
         quiz_file = json.load(f)
-
-    # IMPORTANT: your JSON has {"quizzes": {...}}
     quiz_data = quiz_file.get("quizzes", {})
-
 except FileNotFoundError:
+    quiz_error = f"{QUIZ_FILENAME} not found in repo root."
     quiz_data = {}
 except json.JSONDecodeError as e:
+    quiz_error = f"{QUIZ_FILENAME} is not valid JSON: {e}"
     quiz_data = {}
-    print("❌ quiz.json invalid JSON:", e)
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-INTENTS_PATH = os.path.join(BASE_DIR, "intents.json")
+
+
 
 with open(INTENTS_PATH, "r", encoding="utf-8") as f:
     data = json.load(f)
@@ -318,4 +334,5 @@ def quiz_by_category(category):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
