@@ -1,23 +1,78 @@
 <!doctype html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>Web Chatbot</title>
-  <link rel="stylesheet" href="/static/style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>E300 Electronics Chatbot Assistant</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <div class="wrap">
-    <h1>Chatbot</h1>
+  <div class="container">
+    <h1>Ohm's Law and Logic Gates</h1>
 
-    <div id="chatbox" class="chatbox"></div>
+    <div class="grid">
+      <!-- Chat -->
+      <section class="card">
+        <h2>Chat</h2>
+        <div id="chatBox" class="chatbox"></div>
 
-    <div class="row">
-      <input id="msg" type="text" placeholder="Type a message..." />
-      <button id="send">Send</button>
-      <button id="clear">Clear</button>
+        <div class="row">
+          <input id="chatInput" placeholder="Ask a question..." />
+          <button id="sendBtn">Send</button>
+        </div>
+
+        <div class="hint">
+          Try: <code>explain ohm</code>, <code>V=12 I=0.5</code>, <code>series 10,5,20</code>
+        </div>
+      </section>
+
+      <!-- Drawings -->
+      <section class="card">
+        <h2>Diagrams</h2>
+
+        <div class="row wrap">
+          <button class="btn" data-diagram="series">Series Circuit</button>
+          <button class="btn" data-diagram="parallel">Parallel Circuit</button>
+          <select id="gateSelect">
+            <option>AND</option>
+            <option>OR</option>
+            <option>NOT</option>
+          </select>
+          <button id="showGateBtn" class="btn">Show Gate</button>
+        </div>
+
+        <canvas id="diagramCanvas" width="520" height="260"></canvas>
+
+        <details class="explain" open>
+          <summary>Explanation Panel</summary>
+          <pre id="explainText">Type "explain ohm" / "explain and" / "explain or" / "explain not" in chat.</pre>
+        </details>
+      </section>
+
+      <!-- Ohm calculator -->
+      <section class="card">
+        <h2>Ohm's Law Calculator</h2>
+        <div class="row wrap">
+          <label>V <input id="V" placeholder="Voltage" /></label>
+          <label>I <input id="I" placeholder="Current" /></label>
+          <label>R <input id="R" placeholder="Resistance" /></label>
+          <button id="calcOhmBtn" class="btn">Calculate</button>
+        </div>
+        <div id="ohmResult" class="result"></div>
+      </section>
+
+      <!-- Resistor calculator -->
+      <section class="card">
+        <h2>Series/Parallel Resistor Calculator</h2>
+        <div class="row wrap">
+          <input id="resistors" placeholder="10,5,20" style="min-width: 240px;" />
+          <button id="calcResBtn" class="btn">Calculate</button>
+        </div>
+        <div id="resResult" class="result"></div>
+      </section>
     </div>
   </div>
 
-  <script src="/static/chat.js"></script>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>
