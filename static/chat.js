@@ -57,6 +57,8 @@ chatInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") sendChat();
 });
 
+clearBtn.addEventListener("click", clearChat);
+
 async function clearChat() {
   // Clear UI immediately
   chatBox.textContent = "";
@@ -317,5 +319,6 @@ Outputs the opposite of the input.
 // initial drawing
 drawSeriesCircuit();
 addLine("Bot", "Hi! Ask about Ohm’s law, logic gates, or resistors. Type /quiz to start.");
+
 
 
