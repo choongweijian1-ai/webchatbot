@@ -318,6 +318,12 @@
         "Definition:\nThe range depends on the number of bits used.\n\nKey idea:\nFor N bits: −(2^(N−1)) to (2^(N−1) − 1)\n\nNotes:\nOne bit is reserved as the sign bit."
       ]
     },
+    {
+      "tag": "quizes",
+      "patterns"; ["quiz", "test"],
+      "responses";[
+        "Pls type '/quiz' to start"
+        
 
     {
       "tag": "noanswer",
@@ -330,6 +336,7 @@
     }
   ]
 }
+
 
 
 
