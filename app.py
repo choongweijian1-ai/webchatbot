@@ -7,27 +7,26 @@ import re
 
 app = Flask(__name__)
 
-
 # ------------------- Base directory -------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # ------------------- Load intents.json safely -------------------
 INTENTS_PATH = os.path.join(BASE_DIR, "intents.json")
 with open(INTENTS_PATH, "r", encoding="utf-8") as f:
-    data = json.load(f)
+    intents_file = json.load(f)
 
-intents = data.get("intents", [])
+intents = intents_file.get("intents", [])
 noanswer_intent = next(
     (i for i in intents if i.get("tag") == "noanswer"),
     {"responses": ["Sorry, I didn't understand."]}
 )
 
 # ------------------- Load quiz.json safely -------------------
-# IMPORTANT: choose ONE filename and stick to it (quiz.json OR QUIZ.json)
-QUIZ_FILENAME = "quiz.json"   # <-- change to "QUIZ.json" if that is your actual file name
+# IMPORTANT: filename must match EXACTLY (case-sensitive on Render)
+QUIZ_FILENAME = "quiz.json"  # change to "QUIZ.json" if your file is uppercase
 QUIZ_PATH = os.path.join(BASE_DIR, QUIZ_FILENAME)
 
-quiz_data = {}   # this will be the inner dict: { "number_systems": [...], ... }
+quiz_data = {}   # { "number_systems": [...], "signals": [...], ... }
 quiz_error = None
 
 try:
@@ -40,30 +39,6 @@ except FileNotFoundError:
 except json.JSONDecodeError as e:
     quiz_error = f"{QUIZ_FILENAME} is not valid JSON: {e}"
     quiz_data = {}
-
-
-
-
-with open(INTENTS_PATH, "r", encoding="utf-8") as f:
-    data = json.load(f)
-
-intents = data.get("intents", [])
-noanswer_intent = next(
-    (i for i in intents if i.get("tag") == "noanswer"),
-    {"responses": ["Sorry, I didn't understand."]}
-)
-
-# ------------------- Load QUIZ.json safely -------------------
-QUIZ_PATH = os.path.join(BASE_DIR, "QUIZ.json")
-quiz_data = {}
-
-try:
-    with open(QUIZ_PATH, "r", encoding="utf-8") as f:
-        quiz_data = json.load(f)
-except FileNotFoundError:
-    quiz_data = {"quizzes": {}, "error": "QUIZ.json not found in repo root."}
-except json.JSONDecodeError:
-    quiz_data = {"quizzes": {}, "error": "QUIZ.json is not valid JSON (check commas/quotes)."}
 
 
 def get_bot_response(user_text: str) -> str:
@@ -111,7 +86,7 @@ def parse_explain_command(msg: str):
     return topic if topic in EXPLAIN_TOPICS else None
 
 
-# ------------------- Quiz command parsing (prevents mixing with intents) -------------------
+# ------------------- Quiz command parsing -------------------
 # Commands:
 #   /quiz                           -> list categories
 #   /quiz <category>                -> show question 1
@@ -125,8 +100,7 @@ def parse_quiz_command(msg: str):
     if not msg.lower().startswith("/quiz"):
         return None
 
-    parts = msg.strip().split()
-    # parts[0] is "/quiz"
+    parts = msg.split()
     if len(parts) == 1:
         return {"mode": "list"}
 
@@ -136,12 +110,10 @@ def parse_quiz_command(msg: str):
         return {"mode": "random", "category": category}
 
     if len(parts) >= 3:
-        # try parse question number
         try:
             qnum = int(parts[2])
             return {"mode": "number", "category": category, "qnum": qnum}
         except Exception:
-            # unknown third argument
             return {"mode": "category", "category": category}
 
     return {"mode": "category", "category": category}
@@ -153,8 +125,8 @@ def format_question_text(category: str, q_obj: dict, index_1based: int) -> str:
     lines = [f"📘 Quiz: {category}", f"Q{index_1based}. {q}"]
     for i, c in enumerate(choices, start=1):
         lines.append(f"{i}) {c}")
-    lines.append("")  # spacer
-    lines.append("Tip: Use /quiz <category> <number> to go to another question, or /quiz <category> random.")
+    lines.append("")
+    lines.append("Tip: /quiz <category> <number>  OR  /quiz <category> random")
     return "\n".join(lines)
 
 
@@ -164,38 +136,34 @@ def chat():
     payload = request.get_json(silent=True) or {}
     msg = payload.get("message", "")
 
-    # 1) Explain commands first
+    # 1) Explain commands
     topic = parse_explain_command(msg)
     if topic:
         return jsonify({"type": "explain", "topic": topic})
 
-    # 2) Quiz commands next (so they DON'T get handled by intents)
+    # 2) Quiz commands
     quiz_cmd = parse_quiz_command(msg)
     if quiz_cmd:
-        quizzes = quiz_data.get("quizzes", {}) if isinstance(quiz_data, dict) else {}
-
-        # Handle load errors gracefully
-        if "error" in quiz_data and not quizzes:
-            return jsonify({"type": "chat", "text": f"Quiz error: {quiz_data['error']}"})
+        if quiz_error and not quiz_data:
+            return jsonify({"type": "chat", "text": f"Quiz error: {quiz_error}"})
 
         if quiz_cmd["mode"] == "list":
-            if not quizzes:
-                return jsonify({"type": "chat", "text": "No quiz categories found in QUIZ.json."})
-            cat_list = "\n- " + "\n- ".join(sorted(quizzes.keys()))
+            if not quiz_data:
+                return jsonify({"type": "chat", "text": "No quiz categories found."})
+            cat_list = "\n- " + "\n- ".join(sorted(quiz_data.keys()))
             return jsonify({"type": "chat", "text": f"✅ Available quiz categories:{cat_list}\n\nStart one like:\n/quiz number_systems"})
 
         category = quiz_cmd.get("category", "")
-        if category not in quizzes:
-            available = ", ".join(sorted(quizzes.keys())) if quizzes else "(none)"
+        if category not in quiz_data:
+            available = ", ".join(sorted(quiz_data.keys())) if quiz_data else "(none)"
             return jsonify({"type": "chat", "text": f"❌ Unknown quiz category: {category}\nAvailable: {available}\n\nTry:\n/quiz"})
 
-        questions = quizzes[category]
+        questions = quiz_data[category]
         if not questions:
             return jsonify({"type": "chat", "text": f"No questions found in category: {category}."})
 
         if quiz_cmd["mode"] == "random":
             q_obj = random.choice(questions)
-            # Find its index for display (optional)
             idx = questions.index(q_obj) + 1
             return jsonify({"type": "chat", "text": format_question_text(category, q_obj, idx)})
 
@@ -206,11 +174,11 @@ def chat():
             q_obj = questions[qnum - 1]
             return jsonify({"type": "chat", "text": format_question_text(category, q_obj, qnum)})
 
-        # default: show first question
+        # default: first question
         q_obj = questions[0]
         return jsonify({"type": "chat", "text": format_question_text(category, q_obj, 1)})
 
-    # 3) Otherwise normal chatbot
+    # 3) Normal chatbot
     reply = get_bot_response(msg)
     return jsonify({"type": "chat", "text": reply})
 
@@ -315,24 +283,20 @@ def api_resistors():
     return jsonify({"result": "\n".join(out)})
 
 
-# ------------------- Quiz API (optional, still useful for debugging) -------------------
+# ------------------- Quiz API (debug) -------------------
 @app.route("/api/quiz/categories", methods=["GET"])
 def quiz_categories():
-    quizzes = quiz_data.get("quizzes", {})
-    return jsonify({"categories": sorted(list(quizzes.keys()))})
+    return jsonify({"categories": sorted(list(quiz_data.keys()))})
 
 
 @app.route("/api/quiz/<category>", methods=["GET"])
 def quiz_by_category(category):
-    quizzes = quiz_data.get("quizzes", {})
     category = category.lower().strip()
-    if category not in quizzes:
-        return jsonify({"error": "Unknown quiz category", "available": sorted(list(quizzes.keys()))}), 404
-    return jsonify({"category": category, "questions": quizzes[category]})
+    if category not in quiz_data:
+        return jsonify({"error": "Unknown quiz category", "available": sorted(list(quiz_data.keys()))}), 404
+    return jsonify({"category": category, "questions": quiz_data[category]})
 
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
-
-
