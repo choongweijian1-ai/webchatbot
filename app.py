@@ -175,9 +175,14 @@ def get_correct_option_number(q_obj: dict):
 
 
 def start_quiz_state(category: str, q_index_0based: int):
+    """Store current quiz state in Flask session cookie + reset score."""
     session["quiz_active"] = True
     session["quiz_category"] = category
     session["quiz_index"] = int(q_index_0based)
+
+    # ✅ score tracking
+    session["quiz_correct"] = 0
+    session["quiz_answered"] = 0
 
 
 def clear_quiz_state():
@@ -185,13 +190,17 @@ def clear_quiz_state():
     session.pop("quiz_category", None)
     session.pop("quiz_index", None)
 
+    # ✅ score tracking
+    session.pop("quiz_correct", None)
+    session.pop("quiz_answered", None)
+
+
 
 def grade_quiz_answer(user_msg: str):
     """
-    Option A:
-    - Correct: ✅ + explanation, then go to next question
-    - Wrong: ❌ + explanation, then go to next question
-    - No repeating
+    Option A + Grade:
+    - Correct or Wrong -> show ✅/❌ + explanation + Grade
+    - Always move to next question (no repeating)
     """
     category = session.get("quiz_category")
     idx0 = session.get("quiz_index")
@@ -212,20 +221,44 @@ def grade_quiz_answer(user_msg: str):
 
     user_opt = normalize_answer(user_msg)
 
+    # ----- scoring update -----
+    answered = int(session.get("quiz_answered", 0)) + 1
+    correct = int(session.get("quiz_correct", 0))
+
+    is_correct = (user_opt == correct_opt)
+    if is_correct:
+        correct += 1
+
+    session["quiz_answered"] = answered
+    session["quiz_correct"] = correct
+
+    percent = (correct / answered) * 100 if answered else 0.0
+    grade_line = f"Grade: {correct}/{answered} ({percent:.0f}%)"
+
+    # ----- explanation -----
     explain = (q_obj.get("explain") or "").strip()
     explain_block = f"\n\nExplanation:\n{explain}" if explain else ""
 
-    status = "✅ Correct!" if user_opt == correct_opt else "❌ Incorrect."
+    status = "✅ Correct!" if is_correct else "❌ Incorrect."
 
+    # Move to next question regardless
     next_idx0 = idx0 + 1
+
     if next_idx0 >= len(questions):
         clear_quiz_state()
-        return {"type": "chat", "text": status + explain_block + "\n\n🏁 End of quiz."}
+        return {
+            "type": "chat",
+            "text": status + explain_block + f"\n\n{grade_line}\n\n🏁 End of quiz."
+        }
 
     session["quiz_index"] = next_idx0
     next_q = questions[next_idx0]
     q_text = format_question_text(category, next_q, next_idx0 + 1)
-    return {"type": "chat", "text": status + explain_block + "\n\n" + q_text}
+
+    return {
+        "type": "chat",
+        "text": status + explain_block + f"\n\n{grade_line}\n\n" + q_text
+    }
 
 
 # ------------------- Chat API -------------------
@@ -415,3 +448,4 @@ def quiz_by_category(category):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
