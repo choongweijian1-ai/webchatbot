@@ -1,8 +1,10 @@
 const chatBox = document.getElementById("chatBox");
 const chatInput = document.getElementById("chatInput");
 const sendBtn = document.getElementById("sendBtn");
+const clearBtn = document.getElementById("clearBtn");
 
 const explainText = document.getElementById("explainText");
+
 
 function addLine(who, text) {
   const line = `${who}: ${text}\n`;
@@ -54,6 +56,29 @@ sendBtn.addEventListener("click", sendChat);
 chatInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") sendChat();
 });
+
+async function clearChat() {
+  // Clear UI immediately
+  chatBox.textContent = "";
+
+  // Tell backend to clear session state
+  try {
+    await fetch("/chat", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      credentials: "same-origin",
+      body: JSON.stringify({ message: "/clear" })
+    });
+  } catch (err) {
+    console.error(err);
+  }
+
+  addLine("Bot", "🧹 Chat cleared. Ask a question or type /quiz to start.");
+}
+
+clearBtn.addEventListener("click", clearChat);
+
+
 
 // ------------------- Calculators -------------------
 document.getElementById("calcOhmBtn").addEventListener("click", async () => {
@@ -291,3 +316,4 @@ Outputs the opposite of the input.
 // initial drawing
 drawSeriesCircuit();
 addLine("Bot", "Hi! Ask about Ohm’s law, logic gates, or resistors. Type /quiz to start.");
+
