@@ -171,6 +171,7 @@ function text(x, y, t) {
 
 // -------- Circuits --------
 function drawSeriesCircuit() {
+  ctx.save()
   clearCanvas();
   line(50, 130, 470, 130);
 
@@ -185,44 +186,65 @@ function drawSeriesCircuit() {
   line(50, 190, 50, 130);
 
   text(10, 20, "Series Circuit");
+  ctx.restore();
+
 }
 
 function drawParallelCircuit() {
+  ctx.save();
   clearCanvas();
+
+  // reset common styles
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "#000";
+  ctx.fillStyle = "#d9d9d9";
+  ctx.font = "14px Arial";
+  ctx.textAlign = "center";
 
   // rails
   line(60, 90, 460, 90);
   line(60, 210, 460, 210);
 
   // branch x positions
-  const x1 = 190;
-  const x2 = 330;
+  const x1 = 200;
+  const x2 = 320;
 
-  // resistor size
-  const rw = 70;
-  const rh = 30;
+  // resistor dimensions (VERTICAL)
+  const rw = 28;
+  const rh = 70;
 
-  // ---- Branch 1 (R1) ----
-  // wire down from top rail to resistor
-  line(x1, 90, x1, 135);
-  // resistor
-  rect(x1 - rw / 2, 135, rw, rh);
-  text(x1 - 8, 130, "R1");
-  // wire down from resistor to bottom rail
-  line(x1, 165, x1, 210);
+  // ---------- R1 ----------
+  // wire down
+  line(x1, 90, x1, 120);
 
-  // ---- Branch 2 (R2) ----
-  line(x2, 90, x2, 135);
-  rect(x2 - rw / 2, 135, rw, rh);
-  text(x2 - 8, 130, "R2");
-  line(x2, 165, x2, 210);
+  // resistor (vertical)
+  rect(x1 - rw / 2, 120, rw, rh);
 
-  text(10, 20, "Parallel Circuit");
+  // wire down
+  line(x1, 190, x1, 210);
+
+  // label
+  ctx.fillStyle = "#000";
+  ctx.fillText("R1", x1, 110);
+
+  // ---------- R2 ----------
+  line(x2, 90, x2, 120);
+  rect(x2 - rw / 2, 120, rw, rh);
+  line(x2, 190, x2, 210);
+  ctx.fillText("R2", x2, 110);
+
+  // title
+  ctx.textAlign = "left";
+  ctx.fillText("Parallel Circuit", 10, 20);
+
+  ctx.restore();
 }
+
 
 
 // -------- Gates --------
 function drawAND() {
+  ctx.save()
   clearCanvas();
 
   // inputs
@@ -244,9 +266,12 @@ function drawAND() {
   // output
   line(300, 130, 470, 130);
   text(210, 135, "AND");
+  ctx.restore();
+
 }
 
 function drawOR() {
+  ctx.save()
   clearCanvas();
 
   // inputs
@@ -272,9 +297,12 @@ function drawOR() {
   // output
   line(300, 130, 470, 130);
   text(230, 135, "OR");
+  ctx.restore();
+
 }
 
 function drawNOT() {
+  ctx.save()
   clearCanvas();
   line(70, 130, 160, 130);
 
@@ -300,10 +328,13 @@ function drawNOT() {
   // output
   line(298, 130, 470, 130);
   text(210, 105, "NOT");
+  ctx.restore();
+
 }
 
 // ✅ NAND = AND + bubble
 function drawNAND() {
+  ctx.save()
   clearCanvas();
 
   // inputs
@@ -335,11 +366,14 @@ function drawNAND() {
 
   // output line (no gap)
   line(306, 130, 470, 130);
+  ctx.restore();
+
 }
 
 
 // ✅ NOR = OR + bubble
 function drawNOR() {
+  ctx.save()
   clearCanvas();
 
   // inputs
@@ -375,10 +409,13 @@ function drawNOR() {
 
   // output line (no gap)
   line(306, 130, 470, 130);
+  ctx.restore();
+
 }
 
 // ✅ XOR = OR + extra input curve
 function drawXOR() {
+  ctx.save()
   clearCanvas();
 
   // inputs
@@ -410,6 +447,8 @@ function drawXOR() {
   // output
   line(300, 130, 470, 130);
   text(230, 135, "XOR");
+  ctx.restore();
+
 }
 
 function drawGate(name) {
@@ -518,6 +557,7 @@ window.addEventListener("DOMContentLoaded", () => {
   drawSeriesCircuit();
   addLine("Bot", OPENING_MESSAGE);
 });
+
 
 
 
