@@ -78,7 +78,8 @@ button:hover {
 
 /* ===== CLEAR BUTTONS (same background as Send, red text only) ===== */
 #clearBtn,
-#clearOhmBtn {
+#clearOhmBtn,
+#clearResBtn{
   background: #2b2b3b;     /* SAME as Send */
   border: 1px solid #3b3b52;
   color: #e53935;          /* red text */
@@ -86,7 +87,8 @@ button:hover {
 
 /* Hover: keep background SAME, only brighten text */
 #clearBtn:hover,
-#clearOhmBtn:hover {
+#clearOhmBtn:hover,
+#clearResBtn:hover{
   background: #2b2b3b;     /* FORCE same background */
   color: #ff6f60;          /* lighter red */
 }
@@ -147,6 +149,7 @@ pre {
     grid-template-columns: 1fr;
   }
 }
+
 
 
 
