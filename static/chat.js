@@ -223,29 +223,31 @@ function drawParallelCircuit() {
     line(60, 90, 460, 90);
     line(60, 210, 460, 210);
 
-    // branch x positions
     const x1 = 200;
     const x2 = 320;
 
-    // vertical resistor dimensions
     const rw = 28;
     const rh = 70;
 
-    // R1 branch
+    const labelOffset = 25;
+    const labelY = 155;
+
+    // R1
     line(x1, 90, x1, 120);
     rect(x1 - rw / 2, 120, rw, rh);
     line(x1, 190, x1, 210);
-    label(x1, 110, "R1", "center");
+    label(x1 - labelOffset, labelY, "R1", "right");
 
-    // R2 branch
+    // R2
     line(x2, 90, x2, 120);
     rect(x2 - rw / 2, 120, rw, rh);
     line(x2, 190, x2, 210);
-    label(x2, 110, "R2", "center");
+    label(x2 - labelOffset, labelY, "R2", "right");
 
     label(10, 20, "Parallel Circuit", "left");
   });
 }
+
 
 // -------- Gates --------
 function drawAND() {
@@ -567,3 +569,4 @@ window.addEventListener("DOMContentLoaded", () => {
   drawSeriesCircuit();
   addLine("Bot", OPENING_MESSAGE);
 });
+
