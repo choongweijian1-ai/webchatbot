@@ -68,10 +68,10 @@ button:hover {
   opacity: 0.9;
 }
 
-/* ===== CLEAR BUTTON (same shape, red text) ===== */
-#clearBtn
-#clearOhmBtn{
-  background: #2b2b3b;      /* same background as Send */
+/* ===== CLEAR BUTTONS (same shape, red text) ===== */
+#clearBtn,
+#clearOhmBtn {
+  background: #2b2b3b;
   border: 1px solid #3b3b52;
   color: #e53935;           /* red text */
   padding: 10px 12px;
@@ -79,10 +79,11 @@ button:hover {
   cursor: pointer;
 }
 
-#clearBtn:hover
-#clearOhmBtn:hover{
+#clearBtn:hover,
+#clearOhmBtn:hover {
   color: #ff6f60;           /* lighter red on hover */
 }
+
 
 /* ===== CHAT BOX ===== */
 .chatbox {
@@ -138,5 +139,6 @@ pre {
     grid-template-columns: 1fr;
   }
 }
+
 
 
