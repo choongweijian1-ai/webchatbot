@@ -229,7 +229,7 @@ function drawParallelCircuit() {
     const rw = 28;
     const rh = 70;
 
-    const labelOffset = 25;
+    const labelOffset = 50;
     const labelY = 155;
 
     // R1
@@ -569,4 +569,5 @@ window.addEventListener("DOMContentLoaded", () => {
   drawSeriesCircuit();
   addLine("Bot", OPENING_MESSAGE);
 });
+
 
