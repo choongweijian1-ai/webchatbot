@@ -5,14 +5,14 @@ const clearBtn = document.getElementById("clearBtn");
 
 const explainText = document.getElementById("explainText");
 
+// Opening message shown on load and after clearing chat
 const OPENING_MESSAGE = `👋 Hi! Quick tips:
 - /quiz  (list categories)
 - Type a number after /quiz (example: 6)
 - /clear (reset quiz)
 Ask about Ohm’s law, logic gates, or resistors anytime.`;
 
-
-
+// ------------------- Chat UI -------------------
 function addLine(who, text) {
   const line = `${who}: ${text}\n`;
   chatBox.textContent += line;
@@ -30,9 +30,9 @@ async function sendChat() {
   try {
     res = await fetch("/chat", {
       method: "POST",
-      headers: {"Content-Type": "application/json"},
-      credentials: "same-origin", // 🔑 REQUIRED for Flask sessions (quiz)
-      body: JSON.stringify({message: msg})
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ message: msg })
     });
   } catch (err) {
     console.error(err);
@@ -50,7 +50,6 @@ async function sendChat() {
   }
 
   if (data.type === "explain") {
-    // Update panel text + draw related gate/circuit if desired
     showExplanation(data.topic);
     addLine("Bot", `Opened explanation for ${data.topic.toUpperCase()}.`);
     return;
@@ -64,17 +63,18 @@ chatInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") sendChat();
 });
 
+// ✅ Clear chat but keep opening message
 clearBtn.addEventListener("click", clearChat);
 
 async function clearChat() {
-  // Clear UI immediately
+  // Keep only opening message in UI
   chatBox.textContent = `Bot: ${OPENING_MESSAGE}\n`;
 
-  // Tell backend to clear session state
+  // Tell backend to clear quiz/session state
   try {
     await fetch("/chat", {
       method: "POST",
-      headers: {"Content-Type": "application/json"},
+      headers: { "Content-Type": "application/json" },
       credentials: "same-origin",
       body: JSON.stringify({ message: "/clear" })
     });
@@ -82,13 +82,9 @@ async function clearChat() {
     console.error(err);
   }
 
-  // ✅ Do NOT add any new line, keep it empty
   chatInput.value = "";
   chatInput.focus();
 }
-
-
-
 
 // ------------------- Calculators -------------------
 
@@ -100,7 +96,7 @@ document.getElementById("calcOhmBtn").addEventListener("click", async () => {
 
   const res = await fetch("/api/ohm", {
     method: "POST",
-    headers: {"Content-Type": "application/json"},
+    headers: { "Content-Type": "application/json" },
     credentials: "same-origin",
     body: JSON.stringify({ V, I, R })
   });
@@ -118,13 +114,13 @@ document.getElementById("clearOhmBtn").addEventListener("click", () => {
   document.getElementById("V").focus();
 });
 
-// ✅ Resistor Calculate
+// ✅ Resistor Calculate (FIXED: does NOT clear input)
 document.getElementById("calcResBtn").addEventListener("click", async () => {
   const values = document.getElementById("resistors").value;
 
   const res = await fetch("/api/resistors", {
     method: "POST",
-    headers: {"Content-Type": "application/json"},
+    headers: { "Content-Type": "application/json" },
     credentials: "same-origin",
     body: JSON.stringify({ values })
   });
@@ -133,6 +129,15 @@ document.getElementById("calcResBtn").addEventListener("click", async () => {
   document.getElementById("resResult").textContent = data.result;
 });
 
+// ✅ Resistor Clear (works only if index.html has clearResBtn)
+const clearResBtn = document.getElementById("clearResBtn");
+if (clearResBtn) {
+  clearResBtn.addEventListener("click", () => {
+    document.getElementById("resistors").value = "";
+    document.getElementById("resResult").textContent = "";
+    document.getElementById("resistors").focus();
+  });
+}
 
 // ------------------- Canvas drawings -------------------
 const canvas = document.getElementById("diagramCanvas");
@@ -142,7 +147,7 @@ function clearCanvas() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
-function line(x1, y1, x2, y2, w=2) {
+function line(x1, y1, x2, y2, w = 2) {
   ctx.lineWidth = w;
   ctx.beginPath();
   ctx.moveTo(x1, y1);
@@ -151,7 +156,7 @@ function line(x1, y1, x2, y2, w=2) {
   ctx.stroke();
 }
 
-function rect(x, y, w, h, fill="#d9d9d9") {
+function rect(x, y, w, h, fill = "#d9d9d9") {
   ctx.fillStyle = fill;
   ctx.fillRect(x, y, w, h);
   ctx.strokeStyle = "#000";
@@ -192,7 +197,6 @@ function drawParallelCircuit() {
   rect(290, 90, 60, 110);
   text(310, 80, "R2");
 
-  // vertical connectors
   line(170, 90, 170, 200);
   line(230, 90, 230, 200);
   line(290, 90, 290, 200);
@@ -203,22 +207,19 @@ function drawParallelCircuit() {
 
 function drawAND() {
   clearCanvas();
-  // inputs
   line(70, 90, 150, 90);
   line(70, 170, 150, 170);
-  // left box + half circle style
+
   line(150, 60, 230, 60);
   line(150, 200, 230, 200);
   line(150, 60, 150, 200);
 
-  // arc (right side)
   ctx.beginPath();
   ctx.lineWidth = 2;
   ctx.strokeStyle = "#000";
-  ctx.arc(230, 130, 70, -Math.PI/2, Math.PI/2);
+  ctx.arc(230, 130, 70, -Math.PI / 2, Math.PI / 2);
   ctx.stroke();
 
-  // output
   line(300, 130, 470, 130);
   text(210, 135, "AND");
 }
@@ -228,9 +229,9 @@ function drawOR() {
   line(70, 90, 140, 90);
   line(70, 170, 140, 170);
 
-  // rough OR curve
   ctx.strokeStyle = "#000";
   ctx.lineWidth = 2;
+
   ctx.beginPath();
   ctx.moveTo(140, 60);
   ctx.quadraticCurveTo(220, 130, 140, 200);
@@ -250,10 +251,10 @@ function drawNOT() {
   clearCanvas();
   line(70, 130, 160, 130);
 
-  // triangle
   ctx.strokeStyle = "#000";
   ctx.fillStyle = "#d9d9d9";
   ctx.lineWidth = 2;
+
   ctx.beginPath();
   ctx.moveTo(160, 90);
   ctx.lineTo(160, 170);
@@ -262,10 +263,9 @@ function drawNOT() {
   ctx.fill();
   ctx.stroke();
 
-  // bubble
   ctx.beginPath();
   ctx.fillStyle = "#000";
-  ctx.arc(292, 130, 6, 0, Math.PI*2);
+  ctx.arc(292, 130, 6, 0, Math.PI * 2);
   ctx.fill();
 
   line(298, 130, 470, 130);
@@ -336,23 +336,8 @@ Outputs the opposite of the input.
   }
 }
 
-// initial drawing
-
+// initial drawing + show opening message once
 window.addEventListener("DOMContentLoaded", () => {
   drawSeriesCircuit();
-
-  addLine("Bot", `👋 Hi! Quick tips:
-- /quiz  (list categories)
-- Type a number after /quiz (example: 6)
-- /clear (reset quiz)
-Ask about Ohm’s law, logic gates, or resistors anytime.`);
+  addLine("Bot", OPENING_MESSAGE);
 });
-
-
-
-
-
-
-
-
-
