@@ -14,10 +14,15 @@ const OPENING_MESSAGE = `👋 Hi! Quick tips:
 Ask about Ohm’s law, logic gates, or resistors anytime.`;
 
 function addLine(who, text) {
+  const role = who.toLowerCase(); // "you" or "bot"
   const safeText = String(text).replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  chatBox.innerHTML += `<b>${who}:</b> ${safeText}<br>`;
+
+  chatBox.innerHTML +=
+    `<span class="chat-name ${role}">${who}:</span> ${safeText}<br>`;
+
   chatBox.scrollTop = chatBox.scrollHeight;
 }
+
 
 
 async function sendChat() {
@@ -68,7 +73,8 @@ chatInput.addEventListener("keydown", (e) => {
 clearBtn.addEventListener("click", clearChat);
 
 async function clearChat() {
-  chatBox.innerHTML = `<b>Bot:</b> ${OPENING_MESSAGE.replace(/\n/g, "<br>")}<br>`;
+  chatBox.innerHTML =
+    `<span class="chat-name bot">Bot:</span> ${OPENING_MESSAGE.replace(/\n/g, "<br>")}<br>`;
 
   try {
     await fetch("/chat", {
@@ -84,6 +90,7 @@ async function clearChat() {
   chatInput.value = "";
   chatInput.focus();
 }
+
 
 
 // ------------------- Calculators -------------------
@@ -569,6 +576,7 @@ window.addEventListener("DOMContentLoaded", () => {
   drawSeriesCircuit();
   addLine("Bot", OPENING_MESSAGE.replace(/\n/g, "<br>"));
 });
+
 
 
 
