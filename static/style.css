@@ -79,7 +79,8 @@ button:hover {
   cursor: pointer;
 }
 
-#clearBtn:hover {
+#clearBtn:hover
+#clearOhmBtn:hover{
   color: #ff6f60;           /* lighter red on hover */
 }
 
@@ -137,4 +138,5 @@ pre {
     grid-template-columns: 1fr;
   }
 }
+
 
