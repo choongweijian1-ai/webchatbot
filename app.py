@@ -98,7 +98,7 @@ def home():
 
 
 # ------------------- Explain commands -------------------
-EXPLAIN_TOPICS = {"ohm", "and", "or", "not"}
+EXPLAIN_TOPICS = {"ohm", "and", "or", "not", "nand", "nor", "xor"}
 
 def parse_explain_command(msg: str):
     if not msg:
@@ -503,4 +503,5 @@ def quiz_by_category(category):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
