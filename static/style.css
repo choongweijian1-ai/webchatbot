@@ -69,7 +69,8 @@ button:hover {
 }
 
 /* ===== CLEAR BUTTON (same shape, red text) ===== */
-#clearBtn {
+#clearBtn
+#clearOhmBtn{
   background: #2b2b3b;      /* same background as Send */
   border: 1px solid #3b3b52;
   color: #e53935;           /* red text */
@@ -136,3 +137,4 @@ pre {
     grid-template-columns: 1fr;
   }
 }
+
