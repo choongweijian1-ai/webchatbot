@@ -325,21 +325,41 @@ function drawNAND() {
 
 // ✅ NOR = OR + bubble
 function drawNOR() {
-  drawOR();
+  clearCanvas();
 
-  // cover OR label
-  ctx.clearRect(205, 118, 80, 30);
+  // inputs
+  line(70, 90, 140, 90);
+  line(70, 170, 140, 170);
 
-  // bubble
+  ctx.strokeStyle = "#000";
+  ctx.lineWidth = 2;
+
+  // OR inner curve
   ctx.beginPath();
+  ctx.moveTo(140, 60);
+  ctx.quadraticCurveTo(220, 130, 140, 200);
+  ctx.stroke();
+
+  // OR outer curve
+  ctx.beginPath();
+  ctx.moveTo(140, 60);
+  ctx.quadraticCurveTo(260, 60, 300, 130);
+  ctx.quadraticCurveTo(260, 200, 140, 200);
+  ctx.stroke();
+
+  // NOR label (centered)
+  ctx.font = "16px Arial";
   ctx.fillStyle = "#000";
-  ctx.arc(306, 130, 6, 0, Math.PI * 2);
+  ctx.textAlign = "center";
+  ctx.fillText("NOR", 230, 135);
+
+  // inversion bubble (touching gate)
+  ctx.beginPath();
+  ctx.arc(300, 130, 6, 0, Math.PI * 2);
   ctx.fill();
 
-  // output after bubble
-  line(312, 130, 470, 130);
-
-  text(230, 135, "NOR");
+  // output line (no gap)
+  line(306, 130, 470, 130);
 }
 
 // ✅ XOR = OR + extra input curve
@@ -482,4 +502,5 @@ window.addEventListener("DOMContentLoaded", () => {
   drawSeriesCircuit();
   addLine("Bot", OPENING_MESSAGE);
 });
+
 
