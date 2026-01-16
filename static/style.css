@@ -1,6 +1,17 @@
 :root {
   font-family: Arial, sans-serif;
 }
+.chat-name {
+  font-weight: bold;
+}
+
+.chat-name.you {
+  color: #1a73e8; /* blue */
+}
+
+.chat-name.bot {
+  color: #188038; /* green */
+}
 
 body {
   margin: 0;
@@ -150,6 +161,7 @@ pre {
     grid-template-columns: 1fr;
   }
 }
+
 
 
 
