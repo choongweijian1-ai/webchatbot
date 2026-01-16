@@ -14,10 +14,11 @@ const OPENING_MESSAGE = `👋 Hi! Quick tips:
 Ask about Ohm’s law, logic gates, or resistors anytime.`;
 
 function addLine(who, text) {
-  const line = `${who}: ${text}\n`;
-  chatBox.textContent += line;
+  const safeText = String(text).replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  chatBox.innerHTML += `<b>${who}:</b> ${safeText}<br>`;
   chatBox.scrollTop = chatBox.scrollHeight;
 }
+
 
 async function sendChat() {
   const msg = chatInput.value.trim();
@@ -67,10 +68,8 @@ chatInput.addEventListener("keydown", (e) => {
 clearBtn.addEventListener("click", clearChat);
 
 async function clearChat() {
-  // Keep only opening message in UI
-  chatBox.textContent = `Bot: ${OPENING_MESSAGE}\n`;
+  chatBox.innerHTML = `<b>Bot:</b> ${OPENING_MESSAGE.replace(/\n/g, "<br>")}<br>`;
 
-  // Tell backend to clear quiz/session state
   try {
     await fetch("/chat", {
       method: "POST",
@@ -85,6 +84,7 @@ async function clearChat() {
   chatInput.value = "";
   chatInput.focus();
 }
+
 
 // ------------------- Calculators -------------------
 
@@ -567,7 +567,9 @@ Output is 1 only when inputs are DIFFERENT.
 // initial drawing + show opening message once
 window.addEventListener("DOMContentLoaded", () => {
   drawSeriesCircuit();
-  addLine("Bot", OPENING_MESSAGE);
+  addLine("Bot", OPENING_MESSAGE.replace(/\n/g, "<br>"));
 });
+
+
 
 
