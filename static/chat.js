@@ -189,22 +189,37 @@ function drawSeriesCircuit() {
 
 function drawParallelCircuit() {
   clearCanvas();
-  line(50, 90, 470, 90);
-  line(50, 200, 470, 200);
 
-  rect(170, 90, 60, 110);
-  text(190, 80, "R1");
+  // rails
+  line(60, 90, 460, 90);
+  line(60, 210, 460, 210);
 
-  rect(290, 90, 60, 110);
-  text(310, 80, "R2");
+  // branch x positions
+  const x1 = 190;
+  const x2 = 330;
 
-  line(170, 90, 170, 200);
-  line(230, 90, 230, 200);
-  line(290, 90, 290, 200);
-  line(350, 90, 350, 200);
+  // resistor size
+  const rw = 70;
+  const rh = 30;
+
+  // ---- Branch 1 (R1) ----
+  // wire down from top rail to resistor
+  line(x1, 90, x1, 135);
+  // resistor
+  rect(x1 - rw / 2, 135, rw, rh);
+  text(x1 - 8, 130, "R1");
+  // wire down from resistor to bottom rail
+  line(x1, 165, x1, 210);
+
+  // ---- Branch 2 (R2) ----
+  line(x2, 90, x2, 135);
+  rect(x2 - rw / 2, 135, rw, rh);
+  text(x2 - 8, 130, "R2");
+  line(x2, 165, x2, 210);
 
   text(10, 20, "Parallel Circuit");
 }
+
 
 // -------- Gates --------
 function drawAND() {
@@ -503,6 +518,7 @@ window.addEventListener("DOMContentLoaded", () => {
   drawSeriesCircuit();
   addLine("Bot", OPENING_MESSAGE);
 });
+
 
 
 
