@@ -169,6 +169,7 @@ function text(x, y, t) {
   ctx.fillText(t, x, y);
 }
 
+// -------- Circuits --------
 function drawSeriesCircuit() {
   clearCanvas();
   line(50, 130, 470, 130);
@@ -205,44 +206,55 @@ function drawParallelCircuit() {
   text(10, 20, "Parallel Circuit");
 }
 
+// -------- Gates --------
 function drawAND() {
   clearCanvas();
+
+  // inputs
   line(70, 90, 150, 90);
   line(70, 170, 150, 170);
 
+  // body
   line(150, 60, 230, 60);
   line(150, 200, 230, 200);
   line(150, 60, 150, 200);
 
+  // arc
   ctx.beginPath();
   ctx.lineWidth = 2;
   ctx.strokeStyle = "#000";
   ctx.arc(230, 130, 70, -Math.PI / 2, Math.PI / 2);
   ctx.stroke();
 
+  // output
   line(300, 130, 470, 130);
   text(210, 135, "AND");
 }
 
 function drawOR() {
   clearCanvas();
+
+  // inputs
   line(70, 90, 140, 90);
   line(70, 170, 140, 170);
 
   ctx.strokeStyle = "#000";
   ctx.lineWidth = 2;
 
+  // inner curve
   ctx.beginPath();
   ctx.moveTo(140, 60);
   ctx.quadraticCurveTo(220, 130, 140, 200);
   ctx.stroke();
 
+  // outer curve
   ctx.beginPath();
   ctx.moveTo(140, 60);
   ctx.quadraticCurveTo(260, 60, 300, 130);
   ctx.quadraticCurveTo(260, 200, 140, 200);
   ctx.stroke();
 
+  // output
   line(300, 130, 470, 130);
   text(230, 135, "OR");
 }
@@ -251,6 +263,7 @@ function drawNOT() {
   clearCanvas();
   line(70, 130, 160, 130);
 
+  // triangle
   ctx.strokeStyle = "#000";
   ctx.fillStyle = "#d9d9d9";
   ctx.lineWidth = 2;
@@ -263,61 +276,56 @@ function drawNOT() {
   ctx.fill();
   ctx.stroke();
 
+  // bubble
   ctx.beginPath();
   ctx.fillStyle = "#000";
   ctx.arc(292, 130, 6, 0, Math.PI * 2);
   ctx.fill();
 
+  // output
   line(298, 130, 470, 130);
   text(210, 105, "NOT");
 }
 
-/* ========= NEW: NAND / NOR / XOR ========= */
-
+// ✅ NAND = AND + bubble
 function drawNAND() {
-  // draw AND first
   drawAND();
 
-  // cover output line section (so bubble doesn't overlap)
-  ctx.clearRect(295, 110, 80, 40);
-
-  // redraw small output from gate edge to bubble
-  line(300, 130, 308, 130);
+  // cover AND label so NAND label looks clean
+  ctx.clearRect(190, 118, 80, 30);
 
   // bubble
   ctx.beginPath();
   ctx.fillStyle = "#000";
-  ctx.arc(316, 130, 6, 0, Math.PI * 2);
+  ctx.arc(306, 130, 6, 0, Math.PI * 2);
   ctx.fill();
 
   // output after bubble
-  line(322, 130, 470, 130);
+  line(312, 130, 470, 130);
 
-  text(205, 135, "NAND");
+  text(210, 135, "NAND");
 }
 
+// ✅ NOR = OR + bubble
 function drawNOR() {
-  // draw OR first
   drawOR();
 
-  // cover output line section
-  ctx.clearRect(295, 110, 80, 40);
-
-  // redraw small output to bubble
-  line(300, 130, 308, 130);
+  // cover OR label
+  ctx.clearRect(205, 118, 80, 30);
 
   // bubble
   ctx.beginPath();
   ctx.fillStyle = "#000";
-  ctx.arc(316, 130, 6, 0, Math.PI * 2);
+  ctx.arc(306, 130, 6, 0, Math.PI * 2);
   ctx.fill();
 
   // output after bubble
-  line(322, 130, 470, 130);
+  line(312, 130, 470, 130);
 
-  text(220, 135, "NOR");
+  text(230, 135, "NOR");
 }
 
+// ✅ XOR = OR + extra input curve
 function drawXOR() {
   clearCanvas();
 
@@ -328,18 +336,19 @@ function drawXOR() {
   ctx.strokeStyle = "#000";
   ctx.lineWidth = 2;
 
-  // extra XOR curve (left offset)
+  // extra XOR curve
   ctx.beginPath();
   ctx.moveTo(125, 60);
   ctx.quadraticCurveTo(205, 130, 125, 200);
   ctx.stroke();
 
-  // OR-like main curves
+  // OR inner curve
   ctx.beginPath();
   ctx.moveTo(140, 60);
   ctx.quadraticCurveTo(220, 130, 140, 200);
   ctx.stroke();
 
+  // OR outer curve
   ctx.beginPath();
   ctx.moveTo(140, 60);
   ctx.quadraticCurveTo(260, 60, 300, 130);
@@ -348,11 +357,11 @@ function drawXOR() {
 
   // output
   line(300, 130, 470, 130);
-  text(225, 135, "XOR");
+  text(230, 135, "XOR");
 }
 
 function drawGate(name) {
-  const g = name.toLowerCase();
+  const g = (name || "").toLowerCase().trim();
   if (g === "and") drawAND();
   else if (g === "or") drawOR();
   else if (g === "not") drawNOT();
@@ -361,6 +370,7 @@ function drawGate(name) {
   else if (g === "xor") drawXOR();
 }
 
+// Circuit buttons
 document.querySelectorAll("[data-diagram]").forEach(btn => {
   btn.addEventListener("click", () => {
     const type = btn.getAttribute("data-diagram");
@@ -369,6 +379,7 @@ document.querySelectorAll("[data-diagram]").forEach(btn => {
   });
 });
 
+// Gate dropdown button
 document.getElementById("showGateBtn").addEventListener("click", () => {
   const gate = document.getElementById("gateSelect").value;
   drawGate(gate);
@@ -415,8 +426,39 @@ Outputs the opposite of the input.
 0 → 1
 1 → 0`;
     drawNOT();
+  }else if (topic === "nand") {
+    explainText.textContent =
+`🔴 NAND Gate:
+if even one input is 0, the result is 1, making it the inverse of an AND gate, which outputs 1 only when all inputs are 1. 
+
+0 0 → 1
+0 1 → 1
+1 0 → 1
+1 1 → 0`;
+    drawNAND();
+  }else if (topic === "nor") {
+    explainText.textContent =
+`🔴 NOR Gate:
+output is only high (1) when all of its inputs are low (0).
+
+0 0 → 1
+0 1 → 0
+1 0 → 0
+1 1 → 0`;
+    drawNOR();
+  }else if (topic === "xor") {
+    explainText.textContent =
+`🔴 XOR Gate:
+output is '1' (True) only when its inputs are different (one '0' and one '1'), and '0' (False) when inputs are the same (both '0' or both '1').
+
+0 0 → 0
+0 1 → 1
+1 0 → 1
+1 1 → 0`;
+    drawXOR();
   }
 }
+
 
 // initial drawing + show opening message once
 window.addEventListener("DOMContentLoaded", () => {
