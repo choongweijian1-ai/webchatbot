@@ -85,12 +85,17 @@ async function clearChat() {
 
 // ------------------- Calculators -------------------
 // ✅ Clear Ohm's Law inputs
-document.getElementById("calcOhmBtn").addEventListener("click", async () => {
-  document.getElementById("V").value = "";
-  document.getElementById("I").value = "";
-  document.getElementById("R").value = "";
-  document.getElementById("ohmResult").textContent = "";
-  document.getElementById("V").focus();
+window.addEventListener("DOMContentLoaded", () => {
+  const clearOhmBtn = document.getElementById("clearOhmBtn");
+  if (!clearOhmBtn) return;
+
+  clearOhmBtn.addEventListener("click", () => {
+    document.getElementById("V").value = "";
+    document.getElementById("I").value = "";
+    document.getElementById("R").value = "";
+    document.getElementById("ohmResult").textContent = "";
+    document.getElementById("V").focus();
+  });
 });
 
   
@@ -336,6 +341,7 @@ window.addEventListener("DOMContentLoaded", () => {
 - /clear (reset quiz)
 Ask about Ohm’s law, logic gates, or resistors anytime.`);
 });
+
 
 
 
