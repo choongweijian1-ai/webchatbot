@@ -64,25 +64,28 @@ button.btn,
   cursor: pointer;
 }
 
-button:hover {
+button:hover:not(#clearBtn):not(#clearOhmBtn) {
   opacity: 0.9;
 }
 
-/* ===== CLEAR BUTTONS (same shape, red text) ===== */
+
+
+
+/* ===== CLEAR BUTTONS (same background as Send, red text only) ===== */
 #clearBtn,
 #clearOhmBtn {
-  background: #2b2b3b;
+  background: #2b2b3b;     /* SAME as Send */
   border: 1px solid #3b3b52;
-  color: #e53935;           /* red text */
-  padding: 10px 12px;
-  border-radius: 10px;
-  cursor: pointer;
+  color: #e53935;          /* red text */
 }
 
+/* Hover: keep background SAME, only brighten text */
 #clearBtn:hover,
 #clearOhmBtn:hover {
-  color: #ff6f60;           /* lighter red on hover */
+  background: #2b2b3b;     /* FORCE same background */
+  color: #ff6f60;          /* lighter red */
 }
+
 
 
 /* ===== CHAT BOX ===== */
@@ -139,6 +142,7 @@ pre {
     grid-template-columns: 1fr;
   }
 }
+
 
 
 
