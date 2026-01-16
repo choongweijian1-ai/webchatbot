@@ -5,6 +5,13 @@ const clearBtn = document.getElementById("clearBtn");
 
 const explainText = document.getElementById("explainText");
 
+const OPENING_MESSAGE = `👋 Hi! Quick tips:
+- /quiz  (list categories)
+- Type a number after /quiz (example: 6)
+- /clear (reset quiz)
+Ask about Ohm’s law, logic gates, or resistors anytime.`;
+
+
 
 function addLine(who, text) {
   const line = `${who}: ${text}\n`;
@@ -61,7 +68,7 @@ clearBtn.addEventListener("click", clearChat);
 
 async function clearChat() {
   // Clear UI immediately
-  chatBox.textContent = "";
+  chatBox.textContent = `Bot: ${OPENING_MESSAGE}\n`;
 
   // Tell backend to clear session state
   try {
@@ -340,6 +347,7 @@ window.addEventListener("DOMContentLoaded", () => {
 - /clear (reset quiz)
 Ask about Ohm’s law, logic gates, or resistors anytime.`);
 });
+
 
 
 
