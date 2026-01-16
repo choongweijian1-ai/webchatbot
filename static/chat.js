@@ -424,6 +424,7 @@ document.getElementById("showGateBtn").addEventListener("click", () => {
 
 // ------------------- Explanations -------------------
 function showExplanation(topic) {
+  topic = (topic || "").toLowerCase().trim();   // ✅ normalize first
   if (topic === "ohm") {
     explainText.textContent =
 `📘 Ohm's Law:
@@ -502,5 +503,6 @@ window.addEventListener("DOMContentLoaded", () => {
   drawSeriesCircuit();
   addLine("Bot", OPENING_MESSAGE);
 });
+
 
 
