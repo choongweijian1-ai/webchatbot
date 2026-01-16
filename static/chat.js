@@ -114,7 +114,7 @@ document.getElementById("clearOhmBtn").addEventListener("click", () => {
   document.getElementById("V").focus();
 });
 
-// ✅ Resistor Calculate (FIXED: does NOT clear input)
+// ✅ Resistor Calculate
 document.getElementById("calcResBtn").addEventListener("click", async () => {
   const values = document.getElementById("resistors").value;
 
@@ -272,11 +272,93 @@ function drawNOT() {
   text(210, 105, "NOT");
 }
 
+/* ========= NEW: NAND / NOR / XOR ========= */
+
+function drawNAND() {
+  // draw AND first
+  drawAND();
+
+  // cover output line section (so bubble doesn't overlap)
+  ctx.clearRect(295, 110, 80, 40);
+
+  // redraw small output from gate edge to bubble
+  line(300, 130, 308, 130);
+
+  // bubble
+  ctx.beginPath();
+  ctx.fillStyle = "#000";
+  ctx.arc(316, 130, 6, 0, Math.PI * 2);
+  ctx.fill();
+
+  // output after bubble
+  line(322, 130, 470, 130);
+
+  text(205, 135, "NAND");
+}
+
+function drawNOR() {
+  // draw OR first
+  drawOR();
+
+  // cover output line section
+  ctx.clearRect(295, 110, 80, 40);
+
+  // redraw small output to bubble
+  line(300, 130, 308, 130);
+
+  // bubble
+  ctx.beginPath();
+  ctx.fillStyle = "#000";
+  ctx.arc(316, 130, 6, 0, Math.PI * 2);
+  ctx.fill();
+
+  // output after bubble
+  line(322, 130, 470, 130);
+
+  text(220, 135, "NOR");
+}
+
+function drawXOR() {
+  clearCanvas();
+
+  // inputs
+  line(70, 90, 140, 90);
+  line(70, 170, 140, 170);
+
+  ctx.strokeStyle = "#000";
+  ctx.lineWidth = 2;
+
+  // extra XOR curve (left offset)
+  ctx.beginPath();
+  ctx.moveTo(125, 60);
+  ctx.quadraticCurveTo(205, 130, 125, 200);
+  ctx.stroke();
+
+  // OR-like main curves
+  ctx.beginPath();
+  ctx.moveTo(140, 60);
+  ctx.quadraticCurveTo(220, 130, 140, 200);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(140, 60);
+  ctx.quadraticCurveTo(260, 60, 300, 130);
+  ctx.quadraticCurveTo(260, 200, 140, 200);
+  ctx.stroke();
+
+  // output
+  line(300, 130, 470, 130);
+  text(225, 135, "XOR");
+}
+
 function drawGate(name) {
   const g = name.toLowerCase();
   if (g === "and") drawAND();
   else if (g === "or") drawOR();
   else if (g === "not") drawNOT();
+  else if (g === "nand") drawNAND();
+  else if (g === "nor") drawNOR();
+  else if (g === "xor") drawXOR();
 }
 
 document.querySelectorAll("[data-diagram]").forEach(btn => {
