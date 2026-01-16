@@ -289,22 +289,39 @@ function drawNOT() {
 
 // ✅ NAND = AND + bubble
 function drawNAND() {
-  drawAND();
+  clearCanvas();
 
-  // cover AND label so NAND label looks clean
-  ctx.clearRect(190, 118, 80, 30);
+  // inputs
+  line(70, 90, 150, 90);
+  line(70, 170, 150, 170);
 
-  // bubble
+  // AND body
+  line(150, 60, 230, 60);
+  line(150, 200, 230, 200);
+  line(150, 60, 150, 200);
+
+  // AND arc
   ctx.beginPath();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "#000";
+  ctx.arc(230, 130, 70, -Math.PI / 2, Math.PI / 2);
+  ctx.stroke();
+
+  // NAND label (centered & readable)
+  ctx.font = "16px Arial";
   ctx.fillStyle = "#000";
-  ctx.arc(306, 130, 6, 0, Math.PI * 2);
+  ctx.textAlign = "center";
+  ctx.fillText("NAND", 210, 135);
+
+  // inversion bubble (touching gate)
+  ctx.beginPath();
+  ctx.arc(300, 130, 6, 0, Math.PI * 2);
   ctx.fill();
 
-  // output after bubble
-  line(312, 130, 470, 130);
-
-  text(210, 135, "NAND");
+  // output line (no gap)
+  line(306, 130, 470, 130);
 }
+
 
 // ✅ NOR = OR + bubble
 function drawNOR() {
@@ -465,3 +482,4 @@ window.addEventListener("DOMContentLoaded", () => {
   drawSeriesCircuit();
   addLine("Bot", OPENING_MESSAGE);
 });
+
