@@ -84,21 +84,9 @@ async function clearChat() {
 
 
 // ------------------- Calculators -------------------
-// ✅ Clear Ohm's Law inputs
-window.addEventListener("DOMContentLoaded", () => {
-  const clearOhmBtn = document.getElementById("clearOhmBtn");
-  if (!clearOhmBtn) return;
 
-  clearOhmBtn.addEventListener("click", () => {
-    document.getElementById("V").value = "";
-    document.getElementById("I").value = "";
-    document.getElementById("R").value = "";
-    document.getElementById("ohmResult").textContent = "";
-    document.getElementById("V").focus();
-  });
-});
-
-  
+// ✅ Ohm Calculate
+document.getElementById("calcOhmBtn").addEventListener("click", async () => {
   const V = document.getElementById("V").value;
   const I = document.getElementById("I").value;
   const R = document.getElementById("R").value;
@@ -107,13 +95,23 @@ window.addEventListener("DOMContentLoaded", () => {
     method: "POST",
     headers: {"Content-Type": "application/json"},
     credentials: "same-origin",
-    body: JSON.stringify({V, I, R})
+    body: JSON.stringify({ V, I, R })
   });
 
   const data = await res.json();
   document.getElementById("ohmResult").textContent = data.result;
 });
 
+// ✅ Ohm Clear
+document.getElementById("clearOhmBtn").addEventListener("click", () => {
+  document.getElementById("V").value = "";
+  document.getElementById("I").value = "";
+  document.getElementById("R").value = "";
+  document.getElementById("ohmResult").textContent = "";
+  document.getElementById("V").focus();
+});
+
+// ✅ Resistor Calculate
 document.getElementById("calcResBtn").addEventListener("click", async () => {
   const values = document.getElementById("resistors").value;
 
@@ -121,12 +119,13 @@ document.getElementById("calcResBtn").addEventListener("click", async () => {
     method: "POST",
     headers: {"Content-Type": "application/json"},
     credentials: "same-origin",
-    body: JSON.stringify({values})
+    body: JSON.stringify({ values })
   });
 
   const data = await res.json();
   document.getElementById("resResult").textContent = data.result;
 });
+
 
 // ------------------- Canvas drawings -------------------
 const canvas = document.getElementById("diagramCanvas");
@@ -341,6 +340,7 @@ window.addEventListener("DOMContentLoaded", () => {
 - /clear (reset quiz)
 Ask about Ohm’s law, logic gates, or resistors anytime.`);
 });
+
 
 
 
