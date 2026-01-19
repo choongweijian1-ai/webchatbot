@@ -91,6 +91,27 @@ TOPIC_MENU = {
     "32": "2's complement addition",
     "33": "range of signed numbers",
 }
+# ------------------- Topic -> formula follow-up flow -------------------
+
+NON_TOPIC_TAGS = {
+    "greeting", "goodbye", "thanks", "who", "quizes", "topic", "noanswer"
+}
+
+FORMULA_PROMPT = "\n\n📘 Would you like to see more formulas? (yes / no)"
+
+YES_WORDS = {"yes", "y", "yeah", "yup", "sure", "ok", "okay", "formula", "formulas"}
+NO_WORDS  = {"no", "n", "nope", "nah"}
+
+def append_formula_prompt(text: str) -> str:
+    return (text or "") + FORMULA_PROMPT
+
+def set_formula_state(tag: str):
+    session["awaiting_formula_choice"] = True
+    session["last_topic_tag"] = tag
+
+def clear_formula_state():
+    session.pop("awaiting_formula_choice", None)
+    session.pop("last_topic_tag", None)
 
 # ------------------- Topic follow-up prompt -------------------
 NON_TOPIC_TAGS = {
@@ -117,7 +138,7 @@ def format_topic_menu() -> str:
 # ------------------- Bot response matcher -------------------
 def _match_intent(user_text: str):
     """
-    Return (reply_text, intent_tag) or (noanswer_reply, "noanswer")
+    Return (reply_text, intent_tag).
     """
     user_text = (user_text or "").lower().strip()
 
@@ -135,18 +156,18 @@ def _match_intent(user_text: str):
         if user_text == pattern_lower:
             responses = intent.get("responses", [])
             reply = random.choice(responses) if responses else "OK."
-            return reply, intent.get("tag", "")
+            return reply, intent.get("tag", "noanswer")
 
-    # 2) If very short input, skip substring matching
+    # 2) Very short input -> no substring matching
     if len(user_text) <= 2:
         return random.choice(noanswer_intent.get("responses", ["Sorry, I didn't understand."])), "noanswer"
 
-    # 3) Substring match
+    # 3) Substring match (pattern inside user_text)
     for pattern_lower, intent in pattern_list:
         if pattern_lower in user_text:
             responses = intent.get("responses", [])
             reply = random.choice(responses) if responses else "OK."
-            return reply, intent.get("tag", "")
+            return reply, intent.get("tag", "noanswer")
 
     return random.choice(noanswer_intent.get("responses", ["Sorry, I didn't understand."])), "noanswer"
 
@@ -331,6 +352,31 @@ def chat():
     if msg_clean == "/clear":
         clear_state()
         return jsonify({"type": "chat", "text": "🧹 Cleared quiz/topic state."})
+
+        # ------------------- yes/no after topic formula prompt -------------------
+    if session.get("awaiting_formula_choice"):
+        ans = msg_clean
+
+        if ans in YES_WORDS:
+            clear_formula_state()
+            return jsonify({
+                "type": "chat",
+                "text": "Sorry, currently no formula available."
+            })
+
+        if ans in NO_WORDS:
+            clear_formula_state()
+            return jsonify({
+                "type": "chat",
+                "text": "Alright. You may type /topic to learn more."
+            })
+
+        # If user typed something else, gently remind
+        return jsonify({
+            "type": "chat",
+            "text": "Please reply with **yes** or **no**.\n\n📘 Would you like to see more formulas? (yes / no)"
+        })
+
 
     # ------------------- /topic menu -------------------
     if msg_clean in {"/topic", "topic", "topics", "show topics", "topic menu"}:
@@ -562,4 +608,5 @@ def quiz_by_category(category):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
