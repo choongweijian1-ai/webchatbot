@@ -326,10 +326,11 @@
       "tag": "noanswer",
       "patterns": [],
       "responses": [
-        "I’m not sure I understand. Could you rephrase?",
+        "I’m not sure I understand. Could you type /topic?",
         "Hmm, I don’t know the answer to that yet.",
         "I’m still learning! Try asking something else."
       ]
     }
   ]
 }
+
