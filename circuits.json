@@ -12,7 +12,11 @@
       "V_total = V1 + V2 + V3"
     ],
     "examples": [
-      "If R1 = 10Ω and R2 = 20Ω, then R_total = 30Ω"
+      "Example 1: If R1 = 25Ω, R2 = 50Ω, and R3 = 75Ω, then R_total = 25 + 50 + 75 = 150Ω.",
+      "Example 2: If R1 = 10Ω and R2 = 20Ω, then R_total = 30Ω."
+    ],
+    "formula_images": [
+      "/static/formula_series.png"
     ]
   },
   "parallel": {
@@ -25,10 +29,15 @@
     ],
     "formulas": [
       "1 / R_total = 1/R1 + 1/R2 + 1/R3 + ...",
+      "R_total = 1 / (1/R1 + 1/R2 + 1/R3 + ...)",
       "I_total = I1 + I2 + I3"
     ],
     "examples": [
-      "If R1 = 10Ω and R2 = 20Ω, then R_total ≈ 6.67Ω"
+      "Example 1: If R1 = R2 = R3 = 150Ω, then 1/R_total = 1/150 + 1/150 + 1/150 = 3/150, so R_total = 50Ω.",
+      "Example 2: If R1 = 10Ω and R2 = 20Ω, then R_total = 1 / (1/10 + 1/20) ≈ 6.67Ω."
+    ],
+    "formula_images": [
+      "/static/formula_parallel.png"
     ]
   }
 }
