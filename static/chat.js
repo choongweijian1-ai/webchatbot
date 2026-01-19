@@ -37,7 +37,7 @@ async function sendChat() {
     res = await fetch("/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "same-origin",
+      credentials: "include", // ✅ FIX
       body: JSON.stringify({ message: msg })
     });
   } catch (err) {
@@ -80,7 +80,7 @@ async function clearChat() {
     await fetch("/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "same-origin",
+      credentials: "include", // ✅ FIX
       body: JSON.stringify({ message: "/clear" })
     });
   } catch (err) {
@@ -128,7 +128,8 @@ document.getElementById("calcResBtn").addEventListener("click", async () => {
   const res = await fetch("/api/resistors", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    credentials: "same-origin",
+    credentials: "include"
+
     body: JSON.stringify({ values })
   });
 
@@ -576,6 +577,7 @@ window.addEventListener("DOMContentLoaded", () => {
   drawSeriesCircuit();
   clearChat(); // ✅ reuse the same logic
 });
+
 
 
 
