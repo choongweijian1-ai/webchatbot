@@ -1,0 +1,34 @@
+{
+  "series": {
+    "title": "Series Circuit",
+    "description": "In a series circuit, components are connected end-to-end so the same current flows through all components.",
+    "key_points": [
+      "Same current flows through all resistors",
+      "Total resistance is the sum of individual resistances",
+      "Voltage divides across components"
+    ],
+    "formulas": [
+      "R_total = R1 + R2 + R3 + ...",
+      "V_total = V1 + V2 + V3"
+    ],
+    "examples": [
+      "If R1 = 10Ω and R2 = 20Ω, then R_total = 30Ω"
+    ]
+  },
+  "parallel": {
+    "title": "Parallel Circuit",
+    "description": "In a parallel circuit, components are connected across the same voltage source.",
+    "key_points": [
+      "Same voltage across all branches",
+      "Current divides between branches",
+      "Total resistance is less than the smallest resistor"
+    ],
+    "formulas": [
+      "1 / R_total = 1/R1 + 1/R2 + 1/R3 + ...",
+      "I_total = I1 + I2 + I3"
+    ],
+    "examples": [
+      "If R1 = 10Ω and R2 = 20Ω, then R_total ≈ 6.67Ω"
+    ]
+  }
+}
