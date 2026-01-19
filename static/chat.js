@@ -574,8 +574,9 @@ Output is 1 only when inputs are DIFFERENT.
 // initial drawing + show opening message once
 window.addEventListener("DOMContentLoaded", () => {
   drawSeriesCircuit();
-  addLine("Bot", OPENING_MESSAGE.replace(/\n/g, "<br>"));
+  clearChat(); // ✅ reuse the same logic
 });
+
 
 
 
