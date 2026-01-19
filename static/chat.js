@@ -33,6 +33,22 @@ Ask about Ohm’s law, logic gates, or resistors anytime.`;
     chatBox.scrollTop = chatBox.scrollHeight;
   }
 
+  // ✅ NEW: Render one or multiple images from server
+  function addImages(images) {
+    if (!images) return;
+
+    // allow single string or array
+    const list = Array.isArray(images) ? images : [images];
+
+    list.forEach((url) => {
+      if (!url) return;
+      const safeUrl = String(url).replace(/"/g, "&quot;");
+      chatBox.innerHTML += `<img src="${safeUrl}" class="formula-img" alt="formula"><br>`;
+    });
+
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
   async function sendChat() {
     const msg = chatInput.value.trim();
     if (!msg) return;
@@ -63,6 +79,7 @@ Ask about Ohm’s law, logic gates, or resistors anytime.`;
       return;
     }
 
+    // Explain (panel)
     if (data.type === "explain") {
       if (typeof showExplanation === "function") {
         showExplanation(data.topic, explainText);
@@ -71,7 +88,13 @@ Ask about Ohm’s law, logic gates, or resistors anytime.`;
       return;
     }
 
-    addLine("Bot", data.text);
+    // Normal chat text
+    addLine("Bot", data.text || "");
+
+    // ✅ NEW: show images if provided by Flask
+    // supports {images:[...]} or {image:"..."}
+    if (data.images) addImages(data.images);
+    if (data.image) addImages(data.image);
   }
 
   async function clearChat() {
@@ -143,7 +166,7 @@ Ask about Ohm’s law, logic gates, or resistors anytime.`;
       const res = await fetch("/api/resistors", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include", // ✅ comma fixed + include sessions consistently
+        credentials: "include",
         body: JSON.stringify({ values })
       });
 
@@ -176,7 +199,6 @@ Ask about Ohm’s law, logic gates, or resistors anytime.`;
     ctx.save();
     clearCanvas();
 
-    // baseline defaults
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.lineWidth = 2;
     ctx.strokeStyle = "#000";
