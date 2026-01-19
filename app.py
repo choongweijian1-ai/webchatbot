@@ -127,14 +127,27 @@ def clear_state():
     # formula state
     clear_formula_state()
 
+# ------------------- Text normalization + safe matching -------------------
+def normalize_text(s: str) -> str:
+    s = (s or "").lower().strip()
+    # remove punctuation; keep letters/numbers/spaces so word boundaries behave
+    s = re.sub(r"[^a-z0-9\s]+", " ", s)
+    s = re.sub(r"\s+", " ", s)
+    return s
+
+def has_term(text: str, term: str) -> bool:
+    # whole-word / whole-phrase match (avoids serious->series)
+    return re.search(rf"\b{re.escape(term)}\b", text) is not None
+
 # ------------------- Bot matcher -------------------
 def _match_intent(user_text: str):
-    user_text = (user_text or "").lower().strip()
+    # ✅ normalize the same way everywhere
+    user_text = normalize_text(user_text)
 
     pattern_list = []
     for intent in intents:
         for pattern in intent.get("patterns", []):
-            p = (pattern or "").lower().strip()
+            p = normalize_text(pattern)
             if p:
                 pattern_list.append((p, intent))
     pattern_list.sort(key=lambda x: len(x[0]), reverse=True)
@@ -148,8 +161,10 @@ def _match_intent(user_text: str):
     if len(user_text) <= 2:
         return random.choice(noanswer_intent.get("responses", ["Sorry, I didn't understand."])), "noanswer"
 
+    # phrase/word-boundary match next (safer than raw substring)
     for pattern_lower, intent in pattern_list:
-        if pattern_lower in user_text:
+        # match pattern as a whole phrase
+        if has_term(user_text, pattern_lower):
             responses = intent.get("responses", [])
             return (random.choice(responses) if responses else "OK."), intent.get("tag", "noanswer")
 
@@ -192,7 +207,7 @@ EXPLAIN_TOPICS = {"ohm", "and", "or", "not", "nand", "nor", "xor"}
 def parse_explain_command(msg: str):
     if not msg:
         return None
-    m = re.match(r"^\s*explain\s+([a-zA-Z']+)\s*$", msg.strip().lower())
+    m = re.match(r"^\s*explain\s+([a-zA-Z']+)\s*$", (msg or "").strip().lower())
     if not m:
         return None
     topic = m.group(1).replace("'", "")
@@ -314,7 +329,7 @@ def grade_quiz_answer(user_msg: str):
 def chat():
     payload = request.get_json(silent=True) or {}
     msg = payload.get("message", "")
-    msg_clean = (msg or "").strip().lower()
+    msg_clean = normalize_text(msg)
 
     # Clear everything
     if msg_clean == "/clear":
@@ -351,12 +366,13 @@ def chat():
             "text": "Please reply with yes or no.\n\n📘 Would you like to see more formulas? (yes / no)"
         })
 
-    # ------------------- series / parallel -------------------
-    if msg_clean in {"series", "series circuit"}:
+    # ------------------- series / parallel (NOW matches inside sentences) -------------------
+    # more specific first
+    if has_term(msg_clean, "series circuit") or has_term(msg_clean, "series"):
         set_formula_state("series")
         return jsonify({"type": "chat", "text": format_circuit_text("series") + FORMULA_PROMPT})
 
-    if msg_clean in {"parallel", "parallel circuit"}:
+    if has_term(msg_clean, "parallel circuit") or has_term(msg_clean, "parallel"):
         set_formula_state("parallel")
         return jsonify({"type": "chat", "text": format_circuit_text("parallel") + FORMULA_PROMPT})
 
@@ -546,5 +562,3 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
-
-
