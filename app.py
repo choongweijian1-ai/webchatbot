@@ -7,10 +7,10 @@ import re
 
 app = Flask(__name__)
 
-# ✅ REQUIRED for Flask session storage (quiz state)
+# ✅ REQUIRED for Flask session storage (quiz/topic state)
 app.secret_key = os.environ.get("SECRET_KEY", "dev_secret_key_change_me")
 
-# (Recommended on Render HTTPS)
+# Optional but recommended on Render (HTTPS)
 # app.config.update(
 #     SESSION_COOKIE_SAMESITE="Lax",
 #     SESSION_COOKIE_SECURE=True,
@@ -55,56 +55,57 @@ except json.JSONDecodeError as e:
     quiz_data = {}
 
 # ------------------- Topic menu (like quiz menu) -------------------
+# Must match your intents patterns so get_bot_response(topic_name) works well.
 TOPIC_MENU = {
-    "1": "Analog Signals",
-    "2": "Digital Signal",
-    "3": "Logic Levels",
-    "4": "Number Systems",
-    "5": "Decimal Number System",
-    "6": "Binary Number System",
-    "7": "Hexadecimal Number System",
-    "8": "Combinational Logic Circuits",
-    "9": "SOP (Sum of Products)",
-    "10": "POS (Product of Sums)",
-    "11": "Minterm vs Maxterm",
-    "12": "Truth Table Conversion",
-    "13": "Boolean Algebra",
-    "14": "Logic Simplification",
-    "15": "De Morgan’s Theorem",
-    "16": "Universal Gates",
-    "17": "Karnaugh Map",
-    "18": "K-Map Grouping Rules",
-    "19": "Don’t Care Conditions",
-    "20": "Seven Segment Display",
-    "21": "Common Anode vs Common Cathode",
-    "22": "Basic Binary Addition",
-    "23": "Half Adder",
-    "24": "Full Adder",
-    "25": "Parallel Binary Adder",
-    "26": "Ripple Carry Adder",
-    "27": "Look-Ahead Carry Adder",
-    "28": "Signed Binary Numbers",
-    "29": "Sign Magnitude Representation",
-    "30": "1’s Complement",
-    "31": "2’s Complement",
-    "32": "2’s Complement Addition",
-    "33": "Range of Signed Numbers",
+    "1": "analog signals",
+    "2": "digital signal",
+    "3": "logic levels",
+    "4": "number systems",
+    "5": "decimal number system",
+    "6": "binary number system",
+    "7": "hexadecimal number system",
+    "8": "combinational logic circuits",
+    "9": "sum of products",          # matches SOP intent patterns
+    "10": "product of sums",         # matches POS intent patterns
+    "11": "minterm vs maxterm",
+    "12": "truth table conversion",
+    "13": "boolean algebra",
+    "14": "logic simplification",
+    "15": "de morgan's theorem",
+    "16": "universal gates",
+    "17": "karnaugh map",
+    "18": "k-map grouping rules",
+    "19": "don't care",
+    "20": "seven segment display",
+    "21": "common anode vs common cathode",
+    "22": "basic binary addition",
+    "23": "half adder",
+    "24": "full adder",
+    "25": "parallel binary adder",
+    "26": "ripple carry adder",
+    "27": "look-ahead carry adder",
+    "28": "signed binary numbers",
+    "29": "sign magnitude representation",
+    "30": "1's complement",
+    "31": "2's complement",
+    "32": "2's complement addition",
+    "33": "range of signed numbers",
 }
 
 def format_topic_menu() -> str:
     lines = ["📘 Available Topics:"]
     for k in sorted(TOPIC_MENU.keys(), key=lambda x: int(x)):
-        lines.append(f"{k}. {TOPIC_MENU[k]}")
+        # show nicer title-casing, but keep mapping values as patterns
+        display = TOPIC_MENU[k]
+        lines.append(f"{k}. {display.title()}")
     lines.append("")
     lines.append("Reply with a number (example: 6) to continue.")
-    lines.append('Or type the topic name (example: "Binary Number System").')
+    lines.append('Or type the topic name (example: "binary number system").')
     return "\n".join(lines)
 
 # ------------------- Bot response matcher -------------------
 def get_bot_response(user_text: str) -> str:
     """
-    Fixed:
-    - Proper indentation
     - Exact-match first
     - Prevent short inputs like "hi" from matching "high"
     - Only do substring matching when user_text length > 2
@@ -120,16 +121,16 @@ def get_bot_response(user_text: str) -> str:
             if p:
                 pattern_list.append((p, intent))
 
-    # Prefer longer patterns first so "series circuit" beats "series"
+    # Prefer longer patterns first
     pattern_list.sort(key=lambda x: len(x[0]), reverse=True)
 
-    # 1) Exact match first (works for "hi", "hello", etc.)
+    # 1) Exact match
     for pattern_lower, intent in pattern_list:
         if user_text == pattern_lower:
             responses = intent.get("responses", [])
             return random.choice(responses) if responses else "OK."
 
-    # 2) If very short input, DO NOT attempt substring matching
+    # 2) If very short input, skip substring matching
     if len(user_text) <= 2:
         return random.choice(noanswer_intent.get("responses", ["Sorry, I didn't understand."]))
 
@@ -215,13 +216,11 @@ def is_quiz_answer(msg: str) -> bool:
     return s.isdigit() and 1 <= int(s) <= 9
 
 def normalize_answer(msg: str) -> str:
-    """Map a/b/c/d to 1/2/3/4, keep digits as-is."""
     s = msg.strip().lower()
     mapping = {"a": "1", "b": "2", "c": "3", "d": "4"}
     return mapping.get(s, s)
 
 def get_correct_option_number(q_obj: dict):
-    """Return correct option number as '1'.. based on answer_index (0-based)."""
     choices = q_obj.get("choices", [])
     ans_i = q_obj.get("answer_index", None)
 
@@ -239,33 +238,35 @@ def get_correct_option_number(q_obj: dict):
     return str(ans_i + 1)
 
 def start_quiz_state(category: str, q_index_0based: int):
-    """Store current quiz state in Flask session cookie + reset score."""
     session["quiz_active"] = True
     session["quiz_category"] = category
     session["quiz_index"] = int(q_index_0based)
     session["quiz_correct"] = 0
     session["quiz_answered"] = 0
 
-def clear_quiz_state():
+def clear_state():
+    # quiz state
     session.pop("quiz_active", None)
     session.pop("quiz_category", None)
     session.pop("quiz_index", None)
     session.pop("quiz_correct", None)
     session.pop("quiz_answered", None)
-    session.pop("awaiting_quiz_pick", None)   # ✅ IMPORTANT
-    session.pop("awaiting_topic_pick", None)  # ✅ IMPORTANT
+    session.pop("awaiting_quiz_pick", None)
+
+    # topic state
+    session.pop("awaiting_topic_pick", None)
 
 def grade_quiz_answer(user_msg: str):
     category = session.get("quiz_category")
     idx0 = session.get("quiz_index")
 
     if not category or category not in quiz_data or idx0 is None:
-        clear_quiz_state()
+        clear_state()
         return {"type": "chat", "text": "❌ Quiz session lost. Start again with:\n/quiz"}
 
     questions = quiz_data.get(category, [])
     if not questions or idx0 < 0 or idx0 >= len(questions):
-        clear_quiz_state()
+        clear_state()
         return {"type": "chat", "text": "❌ Quiz question not found. Start again with:\n/quiz"}
 
     q_obj = questions[idx0]
@@ -289,20 +290,17 @@ def grade_quiz_answer(user_msg: str):
     explain_block = f"\n\nExplanation:\n{explain}" if explain else ""
 
     status = "✅ Correct!" if is_correct else "❌ Incorrect."
-
     next_idx0 = idx0 + 1
 
-    # End quiz -> show grade
     if next_idx0 >= len(questions):
         percent = (correct / answered) * 100 if answered else 0.0
         grade_line = f"Grade: {correct}/{answered} ({percent:.0f}%)"
-        clear_quiz_state()
+        clear_state()
         return {
             "type": "chat",
             "text": status + explain_block + f"\n\n{grade_line}\n\n🏁 End of quiz."
         }
 
-    # Continue
     session["quiz_index"] = next_idx0
     next_q = questions[next_idx0]
     q_text = format_question_text(category, next_q, next_idx0 + 1)
@@ -318,29 +316,28 @@ def chat():
 
     # /clear clears quiz + topic state
     if msg_clean == "/clear":
-        clear_quiz_state()
+        clear_state()
         return jsonify({"type": "chat", "text": "🧹 Cleared quiz/topic state."})
 
-    # ------------------- /topic command (menu) -------------------
+    # ------------------- /topic menu -------------------
     if msg_clean in {"/topic", "topic", "topics", "show topics", "topic menu"}:
+        # entering topic menu cancels pending quiz pick only (optional)
         session["awaiting_topic_pick"] = True
-        # Do not disturb quiz unless you want /topic to cancel quiz:
-        # clear_quiz_state()
         return jsonify({"type": "chat", "text": format_topic_menu()})
 
     # ✅ Handle numeric topic selection after /topic
     if session.get("awaiting_topic_pick") and msg_clean.isdigit():
         session["awaiting_topic_pick"] = False
 
-        topic_name = TOPIC_MENU.get(msg_clean)
-        if not topic_name:
+        topic_phrase = TOPIC_MENU.get(msg_clean)
+        if not topic_phrase:
             return jsonify({"type": "chat", "text": "❌ Invalid selection. Type /topic to see the menu again."})
 
-        # Reuse intents: act like user typed the topic name
-        reply = get_bot_response(topic_name)
+        # Use existing intents by passing a phrase that matches patterns
+        reply = get_bot_response(topic_phrase)
         return jsonify({"type": "chat", "text": reply})
 
-    # ✅ Handle numeric quiz menu selection after /quiz
+    # ------------------- Quiz pick (numeric) after /quiz -------------------
     if session.get("awaiting_quiz_pick") and msg_clean.isdigit():
         session["awaiting_quiz_pick"] = False
 
@@ -350,7 +347,7 @@ def chat():
 
         questions = quiz_data.get(category, [])
         if not questions:
-            clear_quiz_state()
+            clear_state()
             return jsonify({"type": "chat", "text": f"No questions found in category: {category}."})
 
         start_quiz_state(category, 0)
@@ -359,7 +356,7 @@ def chat():
             return jsonify({"type": "chat", "text": "❌ This question has no valid 'answer_index' field in QUIZ.json."})
         return jsonify({"type": "chat", "text": format_question_text(category, q_obj, 1)})
 
-    # Intercept quiz answers first
+    # Intercept quiz answers
     if session.get("quiz_active") and is_quiz_answer(msg):
         return jsonify(grade_quiz_answer(msg))
 
@@ -374,10 +371,8 @@ def chat():
         if quiz_error and not quiz_data:
             return jsonify({"type": "chat", "text": f"Quiz error: {quiz_error}"})
 
-        # /quiz -> show menu
         if quiz_cmd["mode"] == "list":
-            # clear quiz state but keep topic state cleared too (optional)
-            clear_quiz_state()
+            # don't wipe topic menu unless you want to
             session["awaiting_quiz_pick"] = True
 
             if not quiz_data:
@@ -392,7 +387,6 @@ def chat():
                 lines.append("Or type: /quiz number_systems")
                 return jsonify({"type": "chat", "text": "\n".join(lines)})
 
-            # fallback if no menu
             cat_list = "\n- " + "\n- ".join(sorted(quiz_data.keys()))
             return jsonify({
                 "type": "chat",
@@ -401,7 +395,6 @@ def chat():
 
         category = quiz_cmd.get("category", "")
         if category not in quiz_data:
-            clear_quiz_state()
             available = ", ".join(sorted(quiz_data.keys())) if quiz_data else "(none)"
             return jsonify({
                 "type": "chat",
@@ -410,10 +403,8 @@ def chat():
 
         questions = quiz_data[category]
         if not questions:
-            clear_quiz_state()
             return jsonify({"type": "chat", "text": f"No questions found in category: {category}."})
 
-        # random question
         if quiz_cmd["mode"] == "random":
             q_obj = random.choice(questions)
             idx0 = questions.index(q_obj)
@@ -422,7 +413,6 @@ def chat():
                 return jsonify({"type": "chat", "text": "❌ This question has no valid 'answer_index' field in QUIZ.json."})
             return jsonify({"type": "chat", "text": format_question_text(category, q_obj, idx0 + 1)})
 
-        # specific question number within category
         if quiz_cmd["mode"] == "number":
             qnum = quiz_cmd.get("qnum", 1)
             if qnum < 1 or qnum > len(questions):
@@ -434,7 +424,6 @@ def chat():
                 return jsonify({"type": "chat", "text": "❌ This question has no valid 'answer_index' field in QUIZ.json."})
             return jsonify({"type": "chat", "text": format_question_text(category, q_obj, qnum)})
 
-        # default: start from Q1
         q_obj = questions[0]
         start_quiz_state(category, 0)
         if not get_correct_option_number(q_obj):
