@@ -104,6 +104,14 @@ NO_WORDS = {"no", "n", "nope", "nah"}
 
 FORMULA_PROMPT = "\n\n📘 Would you like to see more formulas? (yes / no)"
 
+def set_formula_state(key: str):
+    session["awaiting_formula_choice"] = True
+    session["last_formula_key"] = key  # ✅ consistent key name
+
+def clear_formula_state():
+    session.pop("awaiting_formula_choice", None)
+    session.pop("last_formula_key", None)
+
 def clear_state():
     # quiz state
     session.pop("quiz_active", None)
@@ -117,8 +125,7 @@ def clear_state():
     session.pop("awaiting_topic_pick", None)
 
     # formula state
-    session.pop("awaiting_formula_choice", None)
-    session.pop("last_formula_key", None)
+    clear_formula_state()
 
 # ------------------- Bot matcher -------------------
 def _match_intent(user_text: str):
@@ -309,43 +316,40 @@ def chat():
     msg = payload.get("message", "")
     msg_clean = (msg or "").strip().lower()
 
+    # Clear everything
     if msg_clean == "/clear":
         clear_state()
         return jsonify({"type": "chat", "text": "🧹 Cleared state."})
 
-    # ------------------- YES/NO formula handling (for series/parallel only) -------------------
+    # ------------------- YES/NO handler -------------------
     if session.get("awaiting_formula_choice"):
-        if msg_clean in YES_WORDS:
+        ans = msg_clean
+
+        if ans in YES_WORDS:
             key = session.get("last_formula_key")
-            session.pop("awaiting_formula_choice", None)
-            session.pop("last_formula_key", None)
+            clear_formula_state()
 
-            imgs = circuits_data.get(key, {}).get("formula_images", [])
-            if not imgs:
-                return jsonify({"type": "chat", "text": "Sorry, currently no formula available."})
+            imgs = []
+            if key and key in circuits_data:
+                imgs = circuits_data[key].get("formula_images", []) or []
 
-            return jsonify({
-                "type": "chat",
-                "text": "Here are the formulas:",
-                "images": imgs
-            })
+            if imgs:
+                return jsonify({"type": "chat", "text": "Here are the formulas:", "images": imgs})
+            return jsonify({"type": "chat", "text": "Sorry, currently no formula available."})
 
-        if msg_clean in NO_WORDS:
-            session.pop("awaiting_formula_choice", None)
-            session.pop("last_formula_key", None)
-            return jsonify({"type": "chat", "text": "Alright 🙂 You may type /topic to learn more."})
+        if ans in NO_WORDS:
+            clear_formula_state()
+            return jsonify({"type": "chat", "text": "Alright. You may type /topic to learn more."})
 
-        return jsonify({"type": "chat", "text": "Please reply with yes or no."})
+        return jsonify({"type": "chat", "text": "Please reply with yes or no.\n\n📘 Would you like to see more formulas? (yes / no)"})
 
-    # ------------------- series / parallel commands -------------------
+    # ------------------- series / parallel -------------------
     if msg_clean in {"series", "series circuit"}:
-        session["awaiting_formula_choice"] = True
-        session["last_formula_key"] = "series"
+        set_formula_state("series")
         return jsonify({"type": "chat", "text": format_circuit_text("series") + FORMULA_PROMPT})
 
     if msg_clean in {"parallel", "parallel circuit"}:
-        session["awaiting_formula_choice"] = True
-        session["last_formula_key"] = "parallel"
+        set_formula_state("parallel")
         return jsonify({"type": "chat", "text": format_circuit_text("parallel") + FORMULA_PROMPT})
 
     # ------------------- /topic menu -------------------
@@ -383,9 +387,9 @@ def chat():
         return jsonify(grade_quiz_answer(msg))
 
     # Explain commands
-    topic = parse_explain_command(msg)
-    if topic:
-        return jsonify({"type": "explain", "topic": topic})
+    explain_topic = parse_explain_command(msg)
+    if explain_topic:
+        return jsonify({"type": "explain", "topic": explain_topic})
 
     # Quiz commands
     quiz_cmd = parse_quiz_command(msg)
