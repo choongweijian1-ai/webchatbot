@@ -331,6 +331,44 @@
         "I’m still learning! Try asking something else."
       ]
     }
-  ]
+  ],
+  "topic_menu": {
+    "1": "Hi",
+    "2": "Bye",
+    "3": "Thanks",
+    "4": "who",
+    "5": "analog signals",
+    "6": "digital signal",
+    "7": "logic levels",
+    "8": "number systems",
+    "9": "decimal number system",
+    "10": "binary number system",
+    "11": "hexadecimal number system",
+    "12": "combinational logic circuits",
+    "13": "sop",
+    "14": "pos",
+    "15": "minterm vs maxterm",
+    "16": "truth table conversion",
+    "17": "boolean algebra",
+    "18": "logic simplification",
+    "19": "de morgan",
+    "20": "universal gates",
+    "21": "karnaugh map",
+    "22": "k-map grouping rules",
+    "23": "dont care conditions",
+    "24": "seven segment display",
+    "25": "common anode vs common cathode",
+    "26": "basic binary addition",
+    "27": "half adder",
+    "28": "full adder",
+    "29": "parallel binary adder",
+    "30": "ripple carry adder",
+    "31": "look-ahead carry adder",
+    "32": "signed binary numbers",
+    "33": "sign magnitude representation",
+    "34": "1's complement",
+    "35": "2's complement",
+    "36": "2's complement addition",
+    "37": "range of signed numbers"
+  }
 }
-
