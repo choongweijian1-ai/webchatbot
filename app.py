@@ -30,6 +30,16 @@ noanswer_intent = next(
     {"responses": ["Sorry, I didn't understand."]}
 )
 
+# ------------------- Load circuits.json -------------------
+CIRCUITS_PATH = os.path.join(BASE_DIR, "circuits.json")
+
+try:
+    with open(CIRCUITS_PATH, "r", encoding="utf-8") as f:
+        circuits_data = json.load(f)
+except Exception:
+    circuits_data = {}
+
+
 # ------------------- Load QUIZ.json safely -------------------
 QUIZ_FILENAME = "QUIZ.json"  # must match exact case on Render
 QUIZ_PATH = os.path.join(BASE_DIR, QUIZ_FILENAME)
@@ -171,10 +181,37 @@ def _match_intent(user_text: str):
 
     return random.choice(noanswer_intent.get("responses", ["Sorry, I didn't understand."])), "noanswer"
 
-
+#Add helper to format circuit response
 def get_bot_response(user_text: str) -> str:
     reply, _tag = _match_intent(user_text)
     return reply
+
+def format_circuit_topic(key: str) -> str:
+    c = circuits_data.get(key)
+    if not c:
+        return "❌ Circuit topic not found."
+
+    lines = [f"📘 {c['title']}", "", c["description"], ""]
+
+    if c.get("key_points"):
+        lines.append("Key Points:")
+        for p in c["key_points"]:
+            lines.append(f"• {p}")
+        lines.append("")
+
+    if c.get("formulas"):
+        lines.append("Formulas:")
+        for f in c["formulas"]:
+            lines.append(f"• {f}")
+        lines.append("")
+
+    if c.get("examples"):
+        lines.append("Example:")
+        for e in c["examples"]:
+            lines.append(f"• {e}")
+
+    return "\n".join(lines)
+
 
 # ------------------- Pages -------------------
 @app.route("/")
@@ -500,6 +537,25 @@ def chat():
             return jsonify({"type": "chat", "text": "❌ This question has no valid 'answer_index' field in QUIZ.json."})
         return jsonify({"type": "chat", "text": format_question_text(category, q_obj, 1)})
 
+
+                # ------------------- Circuit topics (separate JSON) -------------------
+        if msg_clean in {"series", "series circuit"}:
+            reply = format_circuit_topic("series")
+            reply += "\n\n📘 Would you like to see more formulas? (yes / no)"
+            session["awaiting_formula_choice"] = True
+            session["last_topic_tag"] = "series"
+            return jsonify({"type": "chat", "text": reply})
+    
+        if msg_clean in {"parallel", "parallel circuit"}:
+            reply = format_circuit_topic("parallel")
+            reply += "\n\n📘 Would you like to see more formulas? (yes / no)"
+            session["awaiting_formula_choice"] = True
+            session["last_topic_tag"] = "parallel"
+            return jsonify({"type": "chat", "text": reply})
+
+
+    
+
     # Normal chatbot
     reply, tag = _match_intent(msg)
     
@@ -623,6 +679,7 @@ def quiz_by_category(category):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
