@@ -23,7 +23,6 @@
   "parallel": {
     "title": "Parallel Circuit",
     "short_title": "parallel",
-    "short
     "description": "In a parallel circuit, components are connected across the same voltage source.",
     "key_points": [
       "Same voltage across all branches",
