@@ -1,6 +1,7 @@
 {
   "series": {
     "title": "Series Circuit",
+    "short_title": "Series",
     "description": "In a series circuit, components are connected end-to-end so the same current flows through all components.",
     "key_points": [
       "Same current flows through all resistors",
@@ -21,6 +22,8 @@
   },
   "parallel": {
     "title": "Parallel Circuit",
+    "short_title": "parallel",
+    "short
     "description": "In a parallel circuit, components are connected across the same voltage source.",
     "key_points": [
       "Same voltage across all branches",
