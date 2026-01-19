@@ -323,6 +323,13 @@
       "responses": ["Pls type '/quiz' to start"]
     },
     {
+      "tag": "topic",
+      "patterns": ["/topic", "topic", "topics", "show topics", "topic menu"],
+      "responses": [
+        "📘 Available Topics:\n\n5. Analog Signals\n6. Digital Signal\n7. Logic Levels\n8. Number Systems\n9. Decimal Number System\n10. Binary Number System\n11. Hexadecimal Number System\n12. Combinational Logic Circuits\n13. SOP (Sum of Products)\n14. POS (Product of Sums)\n15. Minterm vs Maxterm\n16. Truth Table Conversion\n17. Boolean Algebra\n18. Logic Simplification\n19. De Morgan’s Theorem\n20. Universal Gates\n21. Karnaugh Map\n22. K-Map Grouping Rules\n23. Don’t Care Conditions\n24. Seven Segment Display\n25. Common Anode vs Common Cathode\n26. Basic Binary Addition\n27. Half Adder\n28. Full Adder\n29. Parallel Binary Adder\n30. Ripple Carry Adder\n31. Look-Ahead Carry Adder\n32. Signed Binary Numbers\n33. Sign Magnitude Representation\n34. 1’s Complement\n35. 2’s Complement\n36. 2’s Complement Addition\n37. Range of Signed Numbers\n\n👉 Type the topic name or the topic number to continue."
+      ]
+    },
+    {
       "tag": "noanswer",
       "patterns": [],
       "responses": [
@@ -331,14 +338,6 @@
         "I’m still learning! Try asking something else."
       ]
     }
-  ],
-{
-  "tag": "topic",
-  "patterns": ["/topic", "topic", "topics", "show topics", "topic menu"],
-  "responses": [
-    "📘 Available Topics:\n\n5. Analog Signals\n6. Digital Signal\n7. Logic Levels\n8. Number Systems\n9. Decimal Number System\n10. Binary Number System\n11. Hexadecimal Number System\n12. Combinational Logic Circuits\n13. SOP (Sum of Products)\n14. POS (Product of Sums)\n15. Minterm vs Maxterm\n16. Truth Table Conversion\n17. Boolean Algebra\n18. Logic Simplification\n19. De Morgan’s Theorem\n20. Universal Gates\n21. Karnaugh Map\n22. K-Map Grouping Rules\n23. Don’t Care Conditions\n24. Seven Segment Display\n25. Common Anode vs Common Cathode\n26. Basic Binary Addition\n27. Half Adder\n28. Full Adder\n29. Parallel Binary Adder\n30. Ripple Carry Adder\n31. Look-Ahead Carry Adder\n32. Signed Binary Numbers\n33. Sign Magnitude Representation\n34. 1’s Complement\n35. 2’s Complement\n36. 2’s Complement Addition\n37. Range of Signed Numbers\n\n👉 Type the topic name or the topic number to continue."
   ]
-}
-]
 }
 
