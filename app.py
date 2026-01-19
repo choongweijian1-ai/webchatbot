@@ -321,40 +321,35 @@ def chat():
         clear_state()
         return jsonify({"type": "chat", "text": "🧹 Cleared state."})
 
-    # ------------------- YES/NO handler -------------------
-    # ------------------- yes/no after topic formula prompt -------------------
+    # ------------------- yes/no after formula prompt -------------------
     if session.get("awaiting_formula_choice"):
         ans = msg_clean
-    
+
         if ans in YES_WORDS:
             key = session.get("last_formula_key")  # ✅ correct key
-            # clear formula state
-            session.pop("awaiting_formula_choice", None)
-            session.pop("last_formula_key", None)
-    
+            clear_formula_state()
+
             imgs = []
             if key and key in circuits_data:
                 imgs = circuits_data[key].get("formula_images", []) or []
-    
+
             if imgs:
                 return jsonify({
                     "type": "chat",
                     "text": "Here are the formulas:",
                     "images": imgs
                 })
-    
+
             return jsonify({"type": "chat", "text": "Sorry, currently no formula available."})
-    
+
         if ans in NO_WORDS:
-            session.pop("awaiting_formula_choice", None)
-            session.pop("last_formula_key", None)
+            clear_formula_state()
             return jsonify({"type": "chat", "text": "Alright. You may type /topic to learn more."})
-    
+
         return jsonify({
             "type": "chat",
             "text": "Please reply with yes or no.\n\n📘 Would you like to see more formulas? (yes / no)"
         })
-    "Please reply with yes or no.\n\n📘 Would you like to see more formulas? (yes / no)"})
 
     # ------------------- series / parallel -------------------
     if msg_clean in {"series", "series circuit"}:
@@ -454,6 +449,7 @@ def chat():
     # Normal chatbot
     reply, _tag = _match_intent(msg)
     return jsonify({"type": "chat", "text": reply})
+})
 
 
 # ------------------- Ohm's Law API -------------------
