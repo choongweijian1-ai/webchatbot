@@ -449,8 +449,6 @@ def chat():
     # Normal chatbot
     reply, _tag = _match_intent(msg)
     return jsonify({"type": "chat", "text": reply})
-})
-
 
 # ------------------- Ohm's Law API -------------------
 def _to_float(x):
@@ -548,4 +546,5 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
