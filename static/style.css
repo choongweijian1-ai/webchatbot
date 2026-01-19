@@ -155,12 +155,22 @@ pre {
   margin: 10px 0 0;
 }
 
+.formula-img {
+  max-width: 220px;   /* change this value */
+  width: 100%;
+  height: auto;
+  margin: 8px 0;
+  border-radius: 8px;
+}
+
+
 /* ===== MOBILE ===== */
 @media (max-width: 900px) {
   .grid {
     grid-template-columns: 1fr;
   }
 }
+
 
 
 
