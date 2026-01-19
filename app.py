@@ -92,6 +92,17 @@ TOPIC_MENU = {
     "33": "range of signed numbers",
 }
 
+# ------------------- Topic follow-up prompt -------------------
+NON_TOPIC_TAGS = {
+    "greeting", "goodbye", "thanks", "who", "quizes", "topic", "noanswer"
+}
+
+FORMULA_PROMPT = "\n\n📘 Would you like to see the formulas? (yes / no)"
+
+def append_formula_prompt(text: str) -> str:
+    return (text or "") + FORMULA_PROMPT
+
+
 def format_topic_menu() -> str:
     lines = ["📘 Available Topics:"]
     for k in sorted(TOPIC_MENU.keys(), key=lambda x: int(x)):
@@ -104,16 +115,12 @@ def format_topic_menu() -> str:
     return "\n".join(lines)
 
 # ------------------- Bot response matcher -------------------
-def get_bot_response(user_text: str) -> str:
+def _match_intent(user_text: str):
     """
-    - Exact-match first
-    - Prevent short inputs like "hi" from matching "high"
-    - Only do substring matching when user_text length > 2
-    - Only do one-way substring: pattern in user_text
+    Return (reply_text, intent_tag) or (noanswer_reply, "noanswer")
     """
     user_text = (user_text or "").lower().strip()
 
-    # Build patterns
     pattern_list = []
     for intent in intents:
         for pattern in intent.get("patterns", []):
@@ -121,26 +128,32 @@ def get_bot_response(user_text: str) -> str:
             if p:
                 pattern_list.append((p, intent))
 
-    # Prefer longer patterns first
     pattern_list.sort(key=lambda x: len(x[0]), reverse=True)
 
     # 1) Exact match
     for pattern_lower, intent in pattern_list:
         if user_text == pattern_lower:
             responses = intent.get("responses", [])
-            return random.choice(responses) if responses else "OK."
+            reply = random.choice(responses) if responses else "OK."
+            return reply, intent.get("tag", "")
 
     # 2) If very short input, skip substring matching
     if len(user_text) <= 2:
-        return random.choice(noanswer_intent.get("responses", ["Sorry, I didn't understand."]))
+        return random.choice(noanswer_intent.get("responses", ["Sorry, I didn't understand."])), "noanswer"
 
-    # 3) Substring match (pattern must be inside user_text)
+    # 3) Substring match
     for pattern_lower, intent in pattern_list:
         if pattern_lower in user_text:
             responses = intent.get("responses", [])
-            return random.choice(responses) if responses else "OK."
+            reply = random.choice(responses) if responses else "OK."
+            return reply, intent.get("tag", "")
 
-    return random.choice(noanswer_intent.get("responses", ["Sorry, I didn't understand."]))
+    return random.choice(noanswer_intent.get("responses", ["Sorry, I didn't understand."])), "noanswer"
+
+
+def get_bot_response(user_text: str) -> str:
+    reply, _tag = _match_intent(user_text)
+    return reply
 
 # ------------------- Pages -------------------
 @app.route("/")
@@ -334,8 +347,11 @@ def chat():
             return jsonify({"type": "chat", "text": "❌ Invalid selection. Type /topic to see the menu again."})
 
         # Use existing intents by passing a phrase that matches patterns
-        reply = get_bot_response(topic_phrase)
+        reply, tag = _match_intent(topic_phrase)
+        if tag and tag not in NON_TOPIC_TAGS:
+            reply = append_formula_prompt(reply)
         return jsonify({"type": "chat", "text": reply})
+
 
     # ------------------- Quiz pick (numeric) after /quiz -------------------
     if session.get("awaiting_quiz_pick") and msg_clean.isdigit():
@@ -431,8 +447,11 @@ def chat():
         return jsonify({"type": "chat", "text": format_question_text(category, q_obj, 1)})
 
     # Normal chatbot
-    reply = get_bot_response(msg)
+    reply, tag = _match_intent(msg)
+    if tag and tag not in NON_TOPIC_TAGS:
+        reply = append_formula_prompt(reply)
     return jsonify({"type": "chat", "text": reply})
+
 
 # ------------------- Ohm's Law API -------------------
 def _to_float(x):
@@ -543,3 +562,4 @@ def quiz_by_category(category):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
