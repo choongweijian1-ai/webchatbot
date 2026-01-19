@@ -6,6 +6,12 @@
   <title>E300 Electronics Chatbot Assistant</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+  <!-- Image Modal -->
+<div id="imgModal" class="img-modal">
+  <span id="imgClose" class="img-close">&times;</span>
+  <img id="imgModalContent" class="img-modal-content">
+</div>
+
 <body>
   <div class="container">
     <h1>AI Based Interactive Learning Assistant for Electrical, Analog & Digital Electronics</h1>
@@ -82,5 +88,6 @@
   <script src="{{ url_for('static', filename='chat.js') }}"></script>
 </body>
 </html>
+
 
 
