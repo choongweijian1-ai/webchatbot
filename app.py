@@ -290,6 +290,10 @@ def clear_state():
     # topic state
     session.pop("awaiting_topic_pick", None)
 
+    # formula follow-up state
+    session.pop("awaiting_formula_choice", None)
+    session.pop("last_topic_tag", None)
+
 def grade_quiz_answer(user_msg: str):
     category = session.get("quiz_category")
     idx0 = session.get("quiz_index")
@@ -394,8 +398,12 @@ def chat():
 
         # Use existing intents by passing a phrase that matches patterns
         reply, tag = _match_intent(topic_phrase)
-        if tag and tag not in NON_TOPIC_TAGS:
+        
+        # Append formula prompt only for real topic intents
+        if tag not in NON_TOPIC_TAGS:
             reply = append_formula_prompt(reply)
+            set_formula_state(tag)
+        
         return jsonify({"type": "chat", "text": reply})
 
 
@@ -494,9 +502,16 @@ def chat():
 
     # Normal chatbot
     reply, tag = _match_intent(msg)
-    if tag and tag not in NON_TOPIC_TAGS:
+    
+    if tag not in NON_TOPIC_TAGS:
         reply = append_formula_prompt(reply)
+        set_formula_state(tag)
+    else:
+        # if user asks something else, cancel any pending formula prompt
+        clear_formula_state()
+    
     return jsonify({"type": "chat", "text": reply})
+
 
 
 # ------------------- Ohm's Law API -------------------
@@ -608,5 +623,6 @@ def quiz_by_category(category):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
