@@ -322,26 +322,39 @@ def chat():
         return jsonify({"type": "chat", "text": "🧹 Cleared state."})
 
     # ------------------- YES/NO handler -------------------
+    # ------------------- yes/no after topic formula prompt -------------------
     if session.get("awaiting_formula_choice"):
         ans = msg_clean
-
+    
         if ans in YES_WORDS:
-            key = session.get("last_formula_key")
-            clear_formula_state()
-
+            key = session.get("last_formula_key")  # ✅ correct key
+            # clear formula state
+            session.pop("awaiting_formula_choice", None)
+            session.pop("last_formula_key", None)
+    
             imgs = []
             if key and key in circuits_data:
                 imgs = circuits_data[key].get("formula_images", []) or []
-
+    
             if imgs:
-                return jsonify({"type": "chat", "text": "Here are the formulas:", "images": imgs})
+                return jsonify({
+                    "type": "chat",
+                    "text": "Here are the formulas:",
+                    "images": imgs
+                })
+    
             return jsonify({"type": "chat", "text": "Sorry, currently no formula available."})
-
+    
         if ans in NO_WORDS:
-            clear_formula_state()
+            session.pop("awaiting_formula_choice", None)
+            session.pop("last_formula_key", None)
             return jsonify({"type": "chat", "text": "Alright. You may type /topic to learn more."})
-
-        return jsonify({"type": "chat", "text": "Please reply with yes or no.\n\n📘 Would you like to see more formulas? (yes / no)"})
+    
+        return jsonify({
+            "type": "chat",
+            "text": "Please reply with yes or no.\n\n📘 Would you like to see more formulas? (yes / no)"
+        })
+    "Please reply with yes or no.\n\n📘 Would you like to see more formulas? (yes / no)"})
 
     # ------------------- series / parallel -------------------
     if msg_clean in {"series", "series circuit"}:
@@ -539,3 +552,4 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
