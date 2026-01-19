@@ -1,97 +1,95 @@
-// ------------------- Chat UI -------------------
-const chatBox = document.getElementById("chatBox");
-const chatInput = document.getElementById("chatInput");
-const sendBtn = document.getElementById("sendBtn");
-const clearBtn = document.getElementById("clearBtn");
+window.addEventListener("DOMContentLoaded", () => {
+  const chatBox = document.getElementById("chatBox");
+  const chatInput = document.getElementById("chatInput");
+  const sendBtn = document.getElementById("sendBtn");
+  const clearBtn = document.getElementById("clearBtn");
+  const explainText = document.getElementById("explainText");
 
-const explainText = document.getElementById("explainText");
+  // If any critical element is missing, show a clear error and stop.
+  if (!chatBox || !chatInput || !sendBtn || !clearBtn) {
+    console.error("Chat UI elements missing:", { chatBox, chatInput, sendBtn, clearBtn });
+    alert("Chat UI failed to load (missing elements). Check IDs in index.html.");
+    return;
+  }
 
-// Opening message shown on load and after clearing chat
-const OPENING_MESSAGE = `👋 Hi! Quick tips:
+  const OPENING_MESSAGE = `👋 Hi! Quick tips:
 - /quiz  (list categories)
 - Type a number after /quiz (example: 6)
-- /topic (list categories)
-- Type a number after /topic (example: 6)
 - /clear (reset quiz)
 Ask about Ohm’s law, logic gates, or resistors anytime.`;
 
-function addLine(who, text) {
-  const role = who.toLowerCase(); // "you" or "bot"
-  const safeText = String(text).replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  function addLine(who, text) {
+    const role = who.toLowerCase();
+    const safeText = String(text).replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    chatBox.innerHTML += `<span class="chat-name ${role}">${who}:</span> ${safeText}<br>`;
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
 
-  chatBox.innerHTML +=
-    `<span class="chat-name ${role}">${who}:</span> ${safeText}<br>`;
+  async function sendChat() {
+    const msg = chatInput.value.trim();
+    if (!msg) return;
 
-  chatBox.scrollTop = chatBox.scrollHeight;
-}
+    addLine("You", msg);
+    chatInput.value = "";
 
+    let res;
+    try {
+      res = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // ✅ important for session
+        body: JSON.stringify({ message: msg })
+      });
+    } catch (err) {
+      console.error(err);
+      addLine("Bot", "⚠️ Network error. Please try again.");
+      return;
+    }
 
+    let data;
+    try {
+      data = await res.json();
+    } catch (err) {
+      console.error(err);
+      addLine("Bot", "⚠️ Server returned invalid response.");
+      return;
+    }
 
-async function sendChat() {
-  const msg = chatInput.value.trim();
-  if (!msg) return;
+    if (data.type === "explain" && explainText) {
+      // keep your existing showExplanation() if defined below
+      showExplanation(data.topic);
+      addLine("Bot", `Opened explanation for ${String(data.topic || "").toUpperCase()}.`);
+      return;
+    }
 
-  addLine("You", msg);
-  chatInput.value = "";
+    addLine("Bot", data.text);
+  }
 
-  let res;
-  try {
-    res = await fetch("/chat", {
+  function clearChat() {
+    chatBox.innerHTML =
+      `<span class="chat-name bot">Bot:</span> ${OPENING_MESSAGE.replace(/\n/g, "<br>")}<br>`;
+
+    fetch("/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "include", // ✅ FIX
-      body: JSON.stringify({ message: msg })
-    });
-  } catch (err) {
-    console.error(err);
-    addLine("Bot", "⚠️ Network error. Please try again.");
-    return;
-  }
-
-  let data;
-  try {
-    data = await res.json();
-  } catch (err) {
-    console.error(err);
-    addLine("Bot", "⚠️ Server returned invalid response.");
-    return;
-  }
-
-  if (data.type === "explain") {
-    showExplanation(data.topic);
-    addLine("Bot", `Opened explanation for ${String(data.topic || "").toUpperCase()}.`);
-    return;
-  }
-
-  addLine("Bot", data.text);
-}
-
-sendBtn.addEventListener("click", sendChat);
-chatInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") sendChat();
-});
-
-// ✅ Clear chat but keep opening message
-clearBtn.addEventListener("click", clearChat);
-
-async function clearChat() {
-  chatBox.innerHTML =
-    `<span class="chat-name bot">Bot:</span> ${OPENING_MESSAGE.replace(/\n/g, "<br>")}<br>`;
-
-  try {
-    await fetch("/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include", // ✅ FIX
+      credentials: "include",
       body: JSON.stringify({ message: "/clear" })
-    });
-  } catch (err) {
-    console.error(err);
+    }).catch(console.error);
+
+    chatInput.value = "";
+    chatInput.focus();
   }
 
-  chatInput.value = "";
-  chatInput.focus();
-}
+  sendBtn.addEventListener("click", sendChat);
+  chatInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") sendChat();
+  });
+
+  clearBtn.addEventListener("click", clearChat);
+
+  // initial
+  clearChat();
+});
 
 
 
@@ -579,6 +577,7 @@ window.addEventListener("DOMContentLoaded", () => {
   drawSeriesCircuit();
   clearChat(); // ✅ reuse the same logic
 });
+
 
 
 
