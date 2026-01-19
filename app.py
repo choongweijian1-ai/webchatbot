@@ -10,6 +10,12 @@ app = Flask(__name__)
 # ✅ REQUIRED for Flask session storage (quiz state)
 app.secret_key = os.environ.get("SECRET_KEY", "dev_secret_key_change_me")
 
+# (Recommended on Render HTTPS)
+# app.config.update(
+#     SESSION_COOKIE_SAMESITE="Lax",
+#     SESSION_COOKIE_SECURE=True,
+# )
+
 # ------------------- Base directory -------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -48,6 +54,51 @@ except json.JSONDecodeError as e:
     quiz_menu = {}
     quiz_data = {}
 
+# ------------------- Topic menu (like quiz menu) -------------------
+TOPIC_MENU = {
+    "1": "Analog Signals",
+    "2": "Digital Signal",
+    "3": "Logic Levels",
+    "4": "Number Systems",
+    "5": "Decimal Number System",
+    "6": "Binary Number System",
+    "7": "Hexadecimal Number System",
+    "8": "Combinational Logic Circuits",
+    "9": "SOP (Sum of Products)",
+    "10": "POS (Product of Sums)",
+    "11": "Minterm vs Maxterm",
+    "12": "Truth Table Conversion",
+    "13": "Boolean Algebra",
+    "14": "Logic Simplification",
+    "15": "De Morgan’s Theorem",
+    "16": "Universal Gates",
+    "17": "Karnaugh Map",
+    "18": "K-Map Grouping Rules",
+    "19": "Don’t Care Conditions",
+    "20": "Seven Segment Display",
+    "21": "Common Anode vs Common Cathode",
+    "22": "Basic Binary Addition",
+    "23": "Half Adder",
+    "24": "Full Adder",
+    "25": "Parallel Binary Adder",
+    "26": "Ripple Carry Adder",
+    "27": "Look-Ahead Carry Adder",
+    "28": "Signed Binary Numbers",
+    "29": "Sign Magnitude Representation",
+    "30": "1’s Complement",
+    "31": "2’s Complement",
+    "32": "2’s Complement Addition",
+    "33": "Range of Signed Numbers",
+}
+
+def format_topic_menu() -> str:
+    lines = ["📘 Available Topics:"]
+    for k in sorted(TOPIC_MENU.keys(), key=lambda x: int(x)):
+        lines.append(f"{k}. {TOPIC_MENU[k]}")
+    lines.append("")
+    lines.append("Reply with a number (example: 6) to continue.")
+    lines.append('Or type the topic name (example: "Binary Number System").')
+    return "\n".join(lines)
 
 # ------------------- Bot response matcher -------------------
 def get_bot_response(user_text: str) -> str:
@@ -90,12 +141,10 @@ def get_bot_response(user_text: str) -> str:
 
     return random.choice(noanswer_intent.get("responses", ["Sorry, I didn't understand."]))
 
-
 # ------------------- Pages -------------------
 @app.route("/")
 def home():
     return render_template("index.html")
-
 
 # ------------------- Explain commands -------------------
 EXPLAIN_TOPICS = {"ohm", "and", "or", "not", "nand", "nor", "xor"}
@@ -108,7 +157,6 @@ def parse_explain_command(msg: str):
         return None
     topic = m.group(1).replace("'", "")
     return topic if topic in EXPLAIN_TOPICS else None
-
 
 # ------------------- Quiz command parsing -------------------
 def parse_quiz_command(msg: str):
@@ -144,7 +192,6 @@ def parse_quiz_command(msg: str):
 
     return {"mode": "category", "category": category}
 
-
 def format_question_text(category: str, q_obj: dict, index_1based: int) -> str:
     q = q_obj.get("q", "")
     choices = q_obj.get("choices", [])
@@ -158,7 +205,6 @@ def format_question_text(category: str, q_obj: dict, index_1based: int) -> str:
     lines.append("Tip: reply 1-4")
     return "\n".join(lines)
 
-
 # ------------------- Quiz answer handling -------------------
 def is_quiz_answer(msg: str) -> bool:
     if not msg:
@@ -168,13 +214,11 @@ def is_quiz_answer(msg: str) -> bool:
         return True
     return s.isdigit() and 1 <= int(s) <= 9
 
-
 def normalize_answer(msg: str) -> str:
     """Map a/b/c/d to 1/2/3/4, keep digits as-is."""
     s = msg.strip().lower()
     mapping = {"a": "1", "b": "2", "c": "3", "d": "4"}
     return mapping.get(s, s)
-
 
 def get_correct_option_number(q_obj: dict):
     """Return correct option number as '1'.. based on answer_index (0-based)."""
@@ -194,7 +238,6 @@ def get_correct_option_number(q_obj: dict):
 
     return str(ans_i + 1)
 
-
 def start_quiz_state(category: str, q_index_0based: int):
     """Store current quiz state in Flask session cookie + reset score."""
     session["quiz_active"] = True
@@ -203,15 +246,14 @@ def start_quiz_state(category: str, q_index_0based: int):
     session["quiz_correct"] = 0
     session["quiz_answered"] = 0
 
-
 def clear_quiz_state():
     session.pop("quiz_active", None)
     session.pop("quiz_category", None)
     session.pop("quiz_index", None)
     session.pop("quiz_correct", None)
     session.pop("quiz_answered", None)
-    session.pop("awaiting_quiz_pick", None)  # ✅ IMPORTANT
-
+    session.pop("awaiting_quiz_pick", None)   # ✅ IMPORTANT
+    session.pop("awaiting_topic_pick", None)  # ✅ IMPORTANT
 
 def grade_quiz_answer(user_msg: str):
     category = session.get("quiz_category")
@@ -267,7 +309,6 @@ def grade_quiz_answer(user_msg: str):
 
     return {"type": "chat", "text": status + explain_block + "\n\n" + q_text}
 
-
 # ------------------- Chat API -------------------
 @app.route("/chat", methods=["POST"])
 def chat():
@@ -275,12 +316,31 @@ def chat():
     msg = payload.get("message", "")
     msg_clean = (msg or "").strip().lower()
 
-    # /clear clears quiz state
+    # /clear clears quiz + topic state
     if msg_clean == "/clear":
         clear_quiz_state()
-        return jsonify({"type": "chat", "text": "🧹 Cleared quiz state."})
+        return jsonify({"type": "chat", "text": "🧹 Cleared quiz/topic state."})
 
-    # ✅ Handle numeric menu selection after /quiz
+    # ------------------- /topic command (menu) -------------------
+    if msg_clean in {"/topic", "topic", "topics", "show topics", "topic menu"}:
+        session["awaiting_topic_pick"] = True
+        # Do not disturb quiz unless you want /topic to cancel quiz:
+        # clear_quiz_state()
+        return jsonify({"type": "chat", "text": format_topic_menu()})
+
+    # ✅ Handle numeric topic selection after /topic
+    if session.get("awaiting_topic_pick") and msg_clean.isdigit():
+        session["awaiting_topic_pick"] = False
+
+        topic_name = TOPIC_MENU.get(msg_clean)
+        if not topic_name:
+            return jsonify({"type": "chat", "text": "❌ Invalid selection. Type /topic to see the menu again."})
+
+        # Reuse intents: act like user typed the topic name
+        reply = get_bot_response(topic_name)
+        return jsonify({"type": "chat", "text": reply})
+
+    # ✅ Handle numeric quiz menu selection after /quiz
     if session.get("awaiting_quiz_pick") and msg_clean.isdigit():
         session["awaiting_quiz_pick"] = False
 
@@ -316,6 +376,7 @@ def chat():
 
         # /quiz -> show menu
         if quiz_cmd["mode"] == "list":
+            # clear quiz state but keep topic state cleared too (optional)
             clear_quiz_state()
             session["awaiting_quiz_pick"] = True
 
@@ -384,7 +445,6 @@ def chat():
     reply = get_bot_response(msg)
     return jsonify({"type": "chat", "text": reply})
 
-
 # ------------------- Ohm's Law API -------------------
 def _to_float(x):
     try:
@@ -396,7 +456,6 @@ def _to_float(x):
         return float(s)
     except Exception:
         return None
-
 
 @app.route("/api/ohm", methods=["POST"])
 def api_ohm():
@@ -427,7 +486,6 @@ def api_ohm():
     Rcalc = V / I
     return jsonify({"result": f"Using R = V ÷ I\nR = {V} ÷ {I} = {Rcalc:.4g} Ω"})
 
-
 # ------------------- Resistor API -------------------
 def parse_resistor_values(values: str):
     if not values:
@@ -443,10 +501,8 @@ def parse_resistor_values(values: str):
             return None
     return nums
 
-
 def series_resistance(rs):
     return sum(rs)
-
 
 def parallel_resistance(rs):
     if any(r == 0 for r in rs):
@@ -455,7 +511,6 @@ def parallel_resistance(rs):
     if inv_sum == 0:
         return math.inf
     return 1.0 / inv_sum
-
 
 @app.route("/api/resistors", methods=["POST"])
 def api_resistors():
@@ -484,13 +539,10 @@ def api_resistors():
 
     return jsonify({"result": "\n".join(out)})
 
-
 # ------------------- Quiz API (debug) -------------------
 @app.route("/api/quiz/categories", methods=["GET"])
 def quiz_categories():
-    # keep existing behavior (sorted categories)
     return jsonify({"categories": sorted(list(quiz_data.keys()))})
-
 
 @app.route("/api/quiz/<category>", methods=["GET"])
 def quiz_by_category(category):
@@ -499,9 +551,6 @@ def quiz_by_category(category):
         return jsonify({"error": "Unknown quiz category", "available": sorted(list(quiz_data.keys()))}), 404
     return jsonify({"category": category, "questions": quiz_data[category]})
 
-
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
-
-
