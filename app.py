@@ -7,7 +7,7 @@ import re
 
 app = Flask(__name__)
 
-# ✅ REQUIRED for Flask session storage (quiz/topic state)
+# ✅ REQUIRED for Flask session storage (quiz/topic/formula state)
 app.secret_key = os.environ.get("SECRET_KEY", "dev_secret_key_change_me")
 
 # Optional but recommended on Render (HTTPS)
@@ -30,15 +30,13 @@ noanswer_intent = next(
     {"responses": ["Sorry, I didn't understand."]}
 )
 
-# ------------------- Load circuits.json -------------------
+# ------------------- Load circuits.json (Series/Parallel) -------------------
 CIRCUITS_PATH = os.path.join(BASE_DIR, "circuits.json")
-
 try:
     with open(CIRCUITS_PATH, "r", encoding="utf-8") as f:
         circuits_data = json.load(f)
 except Exception:
     circuits_data = {}
-
 
 # ------------------- Load QUIZ.json safely -------------------
 QUIZ_FILENAME = "QUIZ.json"  # must match exact case on Render
@@ -65,7 +63,6 @@ except json.JSONDecodeError as e:
     quiz_data = {}
 
 # ------------------- Topic menu (like quiz menu) -------------------
-# Must match your intents patterns so get_bot_response(topic_name) works well.
 TOPIC_MENU = {
     "1": "analog signals",
     "2": "digital signal",
@@ -75,8 +72,8 @@ TOPIC_MENU = {
     "6": "binary number system",
     "7": "hexadecimal number system",
     "8": "combinational logic circuits",
-    "9": "sum of products",          # matches SOP intent patterns
-    "10": "product of sums",         # matches POS intent patterns
+    "9": "sum of products",
+    "10": "product of sums",
     "11": "minterm vs maxterm",
     "12": "truth table conversion",
     "13": "boolean algebra",
@@ -101,16 +98,23 @@ TOPIC_MENU = {
     "32": "2's complement addition",
     "33": "range of signed numbers",
 }
-# ------------------- Topic -> formula follow-up flow -------------------
 
-NON_TOPIC_TAGS = {
-    "greeting", "goodbye", "thanks", "who", "quizes", "topic", "noanswer"
-}
+def format_topic_menu() -> str:
+    lines = ["📘 Available Topics:"]
+    for k in sorted(TOPIC_MENU.keys(), key=lambda x: int(x)):
+        display = TOPIC_MENU[k]
+        lines.append(f"{k}. {display.title()}")
+    lines.append("")
+    lines.append("Reply with a number (example: 6) to continue.")
+    lines.append('Or type the topic name (example: "binary number system").')
+    return "\n".join(lines)
+
+# ------------------- Topic -> formula follow-up flow -------------------
+NON_TOPIC_TAGS = {"greeting", "goodbye", "thanks", "who", "quizes", "topic", "noanswer"}
 
 FORMULA_PROMPT = "\n\n📘 Would you like to see more formulas? (yes / no)"
-
 YES_WORDS = {"yes", "y", "yeah", "yup", "sure", "ok", "okay", "formula", "formulas"}
-NO_WORDS  = {"no", "n", "nope", "nah"}
+NO_WORDS = {"no", "n", "nope", "nah"}
 
 def append_formula_prompt(text: str) -> str:
     return (text or "") + FORMULA_PROMPT
@@ -123,32 +127,11 @@ def clear_formula_state():
     session.pop("awaiting_formula_choice", None)
     session.pop("last_topic_tag", None)
 
-# ------------------- Topic follow-up prompt -------------------
-NON_TOPIC_TAGS = {
-    "greeting", "goodbye", "thanks", "who", "quizes", "topic", "noanswer"
-}
-
-FORMULA_PROMPT = "\n\n📘 Would you like to see the formulas? (yes / no)"
-
-def append_formula_prompt(text: str) -> str:
-    return (text or "") + FORMULA_PROMPT
-
-
-def format_topic_menu() -> str:
-    lines = ["📘 Available Topics:"]
-    for k in sorted(TOPIC_MENU.keys(), key=lambda x: int(x)):
-        # show nicer title-casing, but keep mapping values as patterns
-        display = TOPIC_MENU[k]
-        lines.append(f"{k}. {display.title()}")
-    lines.append("")
-    lines.append("Reply with a number (example: 6) to continue.")
-    lines.append('Or type the topic name (example: "binary number system").')
-    return "\n".join(lines)
-
 # ------------------- Bot response matcher -------------------
 def _match_intent(user_text: str):
     """
     Return (reply_text, intent_tag).
+    Exact match first, then substring match (when input length > 2).
     """
     user_text = (user_text or "").lower().strip()
 
@@ -172,7 +155,7 @@ def _match_intent(user_text: str):
     if len(user_text) <= 2:
         return random.choice(noanswer_intent.get("responses", ["Sorry, I didn't understand."])), "noanswer"
 
-    # 3) Substring match (pattern inside user_text)
+    # 3) Substring match
     for pattern_lower, intent in pattern_list:
         if pattern_lower in user_text:
             responses = intent.get("responses", [])
@@ -181,17 +164,44 @@ def _match_intent(user_text: str):
 
     return random.choice(noanswer_intent.get("responses", ["Sorry, I didn't understand."])), "noanswer"
 
-#Add helper to format circuit response
 def get_bot_response(user_text: str) -> str:
     reply, _tag = _match_intent(user_text)
     return reply
 
+# ------------------- Circuits helpers -------------------
 def format_circuit_topic(key: str) -> str:
+    """
+    key: "series" or "parallel"
+    """
     c = circuits_data.get(key)
     if not c:
+        # fallback (still works even if circuits.json is missing)
+        if key == "series":
+            return (
+                "📘 Series Circuit\n"
+                "In a series circuit, components are connected end-to-end.\n\n"
+                "Key Points:\n"
+                "• Same current flows through all resistors\n"
+                "• Total resistance adds up\n"
+                "• Voltage divides across resistors\n\n"
+                "Formulas:\n"
+                "• R_total = R1 + R2 + R3 + ...\n"
+            )
+        if key == "parallel":
+            return (
+                "📘 Parallel Circuit\n"
+                "In a parallel circuit, components are connected across the same voltage.\n\n"
+                "Key Points:\n"
+                "• Same voltage across all branches\n"
+                "• Current splits between branches\n"
+                "• Total resistance is less than the smallest resistor\n\n"
+                "Formulas:\n"
+                "• 1/R_total = 1/R1 + 1/R2 + 1/R3 + ...\n"
+            )
         return "❌ Circuit topic not found."
 
-    lines = [f"📘 {c['title']}", "", c["description"], ""]
+    lines = [f"📘 {c.get('title','')}".strip(), "", (c.get("description") or "").strip(), ""]
+    lines = [x for x in lines if x != ""]
 
     if c.get("key_points"):
         lines.append("Key Points:")
@@ -201,8 +211,8 @@ def format_circuit_topic(key: str) -> str:
 
     if c.get("formulas"):
         lines.append("Formulas:")
-        for f in c["formulas"]:
-            lines.append(f"• {f}")
+        for fml in c["formulas"]:
+            lines.append(f"• {fml}")
         lines.append("")
 
     if c.get("examples"):
@@ -210,8 +220,38 @@ def format_circuit_topic(key: str) -> str:
         for e in c["examples"]:
             lines.append(f"• {e}")
 
-    return "\n".join(lines)
+    return "\n".join(lines).strip()
 
+def parse_series_parallel_command(msg: str):
+    """
+    Accepts:
+      series
+      parallel
+      series 10,5,20
+      parallel 10 5 20
+    """
+    if not msg:
+        return None
+
+    s = msg.strip().lower()
+    if s.startswith("series"):
+        mode = "series"
+        rest = s[len("series"):].strip()
+    elif s.startswith("parallel"):
+        mode = "parallel"
+        rest = s[len("parallel"):].strip()
+    else:
+        return None
+
+    if not rest:
+        return {"mode": mode, "values": None}
+
+    rest = rest.replace(" ", ",")
+    vals = parse_resistor_values(rest)
+    if vals is None or len(vals) < 2:
+        return {"mode": mode, "values": "invalid"}
+
+    return {"mode": mode, "values": vals}
 
 # ------------------- Pages -------------------
 @app.route("/")
@@ -267,10 +307,7 @@ def parse_quiz_command(msg: str):
 def format_question_text(category: str, q_obj: dict, index_1based: int) -> str:
     q = q_obj.get("q", "")
     choices = q_obj.get("choices", [])
-    lines = [
-        f"📘 Quiz: {category}",
-        f"Q{index_1based}. {q}"
-    ]
+    lines = [f"📘 Quiz: {category}", f"Q{index_1based}. {q}"]
     for i, c in enumerate(choices, start=1):
         lines.append(f"{i}) {c}")
     lines.append("")
@@ -297,15 +334,12 @@ def get_correct_option_number(q_obj: dict):
 
     if ans_i is None:
         return None
-
     try:
         ans_i = int(ans_i)
     except Exception:
         return None
-
     if ans_i < 0 or ans_i >= len(choices):
         return None
-
     return str(ans_i + 1)
 
 def start_quiz_state(category: str, q_index_0based: int):
@@ -328,8 +362,7 @@ def clear_state():
     session.pop("awaiting_topic_pick", None)
 
     # formula follow-up state
-    session.pop("awaiting_formula_choice", None)
-    session.pop("last_topic_tag", None)
+    clear_formula_state()
 
 def grade_quiz_answer(user_msg: str):
     category = session.get("quiz_category")
@@ -363,7 +396,6 @@ def grade_quiz_answer(user_msg: str):
 
     explain = (q_obj.get("explain") or "").strip()
     explain_block = f"\n\nExplanation:\n{explain}" if explain else ""
-
     status = "✅ Correct!" if is_correct else "❌ Incorrect."
     next_idx0 = idx0 + 1
 
@@ -371,15 +403,11 @@ def grade_quiz_answer(user_msg: str):
         percent = (correct / answered) * 100 if answered else 0.0
         grade_line = f"Grade: {correct}/{answered} ({percent:.0f}%)"
         clear_state()
-        return {
-            "type": "chat",
-            "text": status + explain_block + f"\n\n{grade_line}\n\n🏁 End of quiz."
-        }
+        return {"type": "chat", "text": status + explain_block + f"\n\n{grade_line}\n\n🏁 End of quiz."}
 
     session["quiz_index"] = next_idx0
     next_q = questions[next_idx0]
     q_text = format_question_text(category, next_q, next_idx0 + 1)
-
     return {"type": "chat", "text": status + explain_block + "\n\n" + q_text}
 
 # ------------------- Chat API -------------------
@@ -389,39 +417,59 @@ def chat():
     msg = payload.get("message", "")
     msg_clean = (msg or "").strip().lower()
 
-    # /clear clears quiz + topic state
+    # /clear clears quiz + topic + formula state
     if msg_clean == "/clear":
         clear_state()
         return jsonify({"type": "chat", "text": "🧹 Cleared quiz/topic state."})
 
-        # ------------------- yes/no after topic formula prompt -------------------
+    # ------------------- yes/no after topic formula prompt -------------------
+    # If user starts a new command, cancel the pending yes/no so chat doesn't get stuck.
     if session.get("awaiting_formula_choice"):
-        ans = msg_clean
-
-        if ans in YES_WORDS:
+        if msg_clean.startswith(("/topic", "/quiz", "explain", "series", "parallel")):
             clear_formula_state()
+        else:
+            if msg_clean in YES_WORDS:
+                clear_formula_state()
+                return jsonify({"type": "chat", "text": "Sorry, currently no formula available."})
+            if msg_clean in NO_WORDS:
+                clear_formula_state()
+                return jsonify({"type": "chat", "text": "Alright. You may type /topic to learn more."})
             return jsonify({
                 "type": "chat",
-                "text": "Sorry, currently no formula available."
+                "text": "Please reply with yes or no.\n\n📘 Would you like to see more formulas? (yes / no)"
             })
 
-        if ans in NO_WORDS:
-            clear_formula_state()
-            return jsonify({
-                "type": "chat",
-                "text": "Alright. You may type /topic to learn more."
-            })
+    # ------------------- Circuits (series/parallel) -------------------
+    sp = parse_series_parallel_command(msg)
+    if sp:
+        mode = sp["mode"]
 
-        # If user typed something else, gently remind
-        return jsonify({
-            "type": "chat",
-            "text": "Please reply with **yes** or **no**.\n\n📘 Would you like to see more formulas? (yes / no)"
-        })
+        # "series" or "parallel" alone -> show learning content from circuits.json
+        if sp["values"] is None:
+            reply = format_circuit_topic(mode)
+            reply = append_formula_prompt(reply)
+            set_formula_state(mode)  # tag stored as "series"/"parallel"
+            return jsonify({"type": "chat", "text": reply})
 
+        # invalid input
+        if sp["values"] == "invalid":
+            return jsonify({"type": "chat", "text": "❌ Please enter at least TWO resistor values.\nExample: series 10,5,20"})
+
+        # compute totals
+        rs = sp["values"]
+        rs_str = ", ".join(f"{r:g}" for r in rs)
+
+        if mode == "series":
+            total = series_resistance(rs)
+            return jsonify({"type": "chat", "text": f"Resistors: {rs_str} (Ω)\nSeries total: {total:.4g} Ω"})
+
+        total = parallel_resistance(rs)
+        if math.isinf(total):
+            return jsonify({"type": "chat", "text": "Parallel total: ∞ (invalid because one resistor is 0 Ω)"})
+        return jsonify({"type": "chat", "text": f"Resistors: {rs_str} (Ω)\nParallel total: {total:.4g} Ω"})
 
     # ------------------- /topic menu -------------------
     if msg_clean in {"/topic", "topic", "topics", "show topics", "topic menu"}:
-        # entering topic menu cancels pending quiz pick only (optional)
         session["awaiting_topic_pick"] = True
         return jsonify({"type": "chat", "text": format_topic_menu()})
 
@@ -433,16 +481,12 @@ def chat():
         if not topic_phrase:
             return jsonify({"type": "chat", "text": "❌ Invalid selection. Type /topic to see the menu again."})
 
-        # Use existing intents by passing a phrase that matches patterns
         reply, tag = _match_intent(topic_phrase)
-        
-        # Append formula prompt only for real topic intents
         if tag not in NON_TOPIC_TAGS:
             reply = append_formula_prompt(reply)
             set_formula_state(tag)
-        
-        return jsonify({"type": "chat", "text": reply})
 
+        return jsonify({"type": "chat", "text": reply})
 
     # ------------------- Quiz pick (numeric) after /quiz -------------------
     if session.get("awaiting_quiz_pick") and msg_clean.isdigit():
@@ -468,9 +512,9 @@ def chat():
         return jsonify(grade_quiz_answer(msg))
 
     # Explain commands
-    topic = parse_explain_command(msg)
-    if topic:
-        return jsonify({"type": "explain", "topic": topic})
+    explain_topic = parse_explain_command(msg)
+    if explain_topic:
+        return jsonify({"type": "explain", "topic": explain_topic})
 
     # Quiz commands
     quiz_cmd = parse_quiz_command(msg)
@@ -478,8 +522,8 @@ def chat():
         if quiz_error and not quiz_data:
             return jsonify({"type": "chat", "text": f"Quiz error: {quiz_error}"})
 
+        # /quiz -> show menu
         if quiz_cmd["mode"] == "list":
-            # don't wipe topic menu unless you want to
             session["awaiting_quiz_pick"] = True
 
             if not quiz_data:
@@ -495,23 +539,18 @@ def chat():
                 return jsonify({"type": "chat", "text": "\n".join(lines)})
 
             cat_list = "\n- " + "\n- ".join(sorted(quiz_data.keys()))
-            return jsonify({
-                "type": "chat",
-                "text": f"✅ Available quiz categories:{cat_list}\n\nStart one like:\n/quiz number_systems"
-            })
+            return jsonify({"type": "chat", "text": f"✅ Available quiz categories:{cat_list}\n\nStart one like:\n/quiz number_systems"})
 
         category = quiz_cmd.get("category", "")
         if category not in quiz_data:
             available = ", ".join(sorted(quiz_data.keys())) if quiz_data else "(none)"
-            return jsonify({
-                "type": "chat",
-                "text": f"❌ Unknown quiz category: {category}\nAvailable: {available}\n\nTry:\n/quiz"
-            })
+            return jsonify({"type": "chat", "text": f"❌ Unknown quiz category: {category}\nAvailable: {available}\n\nTry:\n/quiz"})
 
         questions = quiz_data[category]
         if not questions:
             return jsonify({"type": "chat", "text": f"No questions found in category: {category}."})
 
+        # random question
         if quiz_cmd["mode"] == "random":
             q_obj = random.choice(questions)
             idx0 = questions.index(q_obj)
@@ -520,6 +559,7 @@ def chat():
                 return jsonify({"type": "chat", "text": "❌ This question has no valid 'answer_index' field in QUIZ.json."})
             return jsonify({"type": "chat", "text": format_question_text(category, q_obj, idx0 + 1)})
 
+        # specific question number
         if quiz_cmd["mode"] == "number":
             qnum = quiz_cmd.get("qnum", 1)
             if qnum < 1 or qnum > len(questions):
@@ -531,44 +571,23 @@ def chat():
                 return jsonify({"type": "chat", "text": "❌ This question has no valid 'answer_index' field in QUIZ.json."})
             return jsonify({"type": "chat", "text": format_question_text(category, q_obj, qnum)})
 
+        # default: start from Q1
         q_obj = questions[0]
         start_quiz_state(category, 0)
         if not get_correct_option_number(q_obj):
             return jsonify({"type": "chat", "text": "❌ This question has no valid 'answer_index' field in QUIZ.json."})
         return jsonify({"type": "chat", "text": format_question_text(category, q_obj, 1)})
 
-
-                # ------------------- Circuit topics (separate JSON) -------------------
-        if msg_clean in {"series", "series circuit"}:
-            reply = format_circuit_topic("series")
-            reply += "\n\n📘 Would you like to see more formulas? (yes / no)"
-            session["awaiting_formula_choice"] = True
-            session["last_topic_tag"] = "series"
-            return jsonify({"type": "chat", "text": reply})
-    
-        if msg_clean in {"parallel", "parallel circuit"}:
-            reply = format_circuit_topic("parallel")
-            reply += "\n\n📘 Would you like to see more formulas? (yes / no)"
-            session["awaiting_formula_choice"] = True
-            session["last_topic_tag"] = "parallel"
-            return jsonify({"type": "chat", "text": reply})
-
-
-    
-
-    # Normal chatbot
+    # ------------------- Normal chatbot (intents.json) -------------------
     reply, tag = _match_intent(msg)
-    
+
     if tag not in NON_TOPIC_TAGS:
         reply = append_formula_prompt(reply)
         set_formula_state(tag)
     else:
-        # if user asks something else, cancel any pending formula prompt
         clear_formula_state()
-    
+
     return jsonify({"type": "chat", "text": reply})
-
-
 
 # ------------------- Ohm's Law API -------------------
 def _to_float(x):
@@ -593,7 +612,6 @@ def api_ohm():
 
     if provided < 2:
         return jsonify({"result": "Please enter any TWO values (V, I, R) to calculate the third."})
-
     if provided > 2:
         return jsonify({"result": "Please provide ONLY two values. Clear the third box and try again."})
 
@@ -679,7 +697,3 @@ def quiz_by_category(category):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
-
-
-
-
