@@ -10,6 +10,8 @@ const explainText = document.getElementById("explainText");
 const OPENING_MESSAGE = `👋 Hi! Quick tips:
 - /quiz  (list categories)
 - Type a number after /quiz (example: 6)
+- /topic (list categories)
+- Type a number after /topic (example: 6)
 - /clear (reset quiz)
 Ask about Ohm’s law, logic gates, or resistors anytime.`;
 
@@ -577,6 +579,7 @@ window.addEventListener("DOMContentLoaded", () => {
   drawSeriesCircuit();
   clearChat(); // ✅ reuse the same logic
 });
+
 
 
 
