@@ -1,6 +1,7 @@
 // =================== chat.js (FULL FIXED VERSION) ===================
 
 window.addEventListener("DOMContentLoaded", () => {
+
   // ------------------- Chat UI -------------------
   const chatBox = document.getElementById("chatBox");
   const chatInput = document.getElementById("chatInput");
@@ -33,7 +34,7 @@ Ask about Ohm’s law, logic gates, or resistors anytime.`;
     chatBox.scrollTop = chatBox.scrollHeight;
   }
 
-  // ✅ NEW: Render one or multiple images from server
+  // ✅ Render one or multiple images from server
   function addImages(images) {
     if (!images) return;
 
@@ -91,8 +92,7 @@ Ask about Ohm’s law, logic gates, or resistors anytime.`;
     // Normal chat text
     addLine("Bot", data.text || "");
 
-    // ✅ NEW: show images if provided by Flask
-    // supports {images:[...]} or {image:"..."}
+    // ✅ show images if provided by Flask
     if (data.images) addImages(data.images);
     if (data.image) addImages(data.image);
   }
@@ -473,13 +473,49 @@ Ask about Ohm’s law, logic gates, or resistors anytime.`;
     });
   }
 
+  // =================== IMAGE MODAL (POP OUT) ===================
+  const imgModal = document.getElementById("imgModal");
+  const imgModalContent = document.getElementById("imgModalContent");
+  const imgClose = document.getElementById("imgClose");
+
+  if (imgModal && imgModalContent && imgClose) {
+    // open modal by clicking formula image
+    document.addEventListener("click", (e) => {
+      if (e.target.classList && e.target.classList.contains("formula-img")) {
+        imgModal.style.display = "flex";
+        imgModalContent.src = e.target.src;
+      }
+    });
+
+    // close button
+    imgClose.addEventListener("click", () => {
+      imgModal.style.display = "none";
+      imgModalContent.src = "";
+    });
+
+    // click outside image closes
+    imgModal.addEventListener("click", (e) => {
+      if (e.target === imgModal) {
+        imgModal.style.display = "none";
+        imgModalContent.src = "";
+      }
+    });
+
+    // ESC closes
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        imgModal.style.display = "none";
+        imgModalContent.src = "";
+      }
+    });
+  }
+
   // initial
   drawSeriesCircuit();
   clearChat();
 });
 
 // ------------------- Explanations -------------------
-// Pass explainText in so we don't rely on globals
 function showExplanation(topic, explainTextEl) {
   const t = (topic || "").toLowerCase().trim();
   if (!explainTextEl) return;
