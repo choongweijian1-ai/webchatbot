@@ -13,9 +13,6 @@ app.secret_key = os.environ.get("SECRET_KEY", "dev_secret_key_change_me")
 # ------------------- Base directory -------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# ------------------- PDF path -------------------
-PDF_PATH = os.path.join(BASE_DIR, "pdfs", "logic_gates.pdf")
-
 # ------------------- Load intents.json safely -------------------
 INTENTS_PATH = os.path.join(BASE_DIR, "intents.json")
 with open(INTENTS_PATH, "r", encoding="utf-8") as f:
@@ -191,7 +188,7 @@ def format_circuit_text(key: str) -> str:
 
     if c.get("examples"):
         lines.append("Examples:")
-        for e in c["examples"]:
+        for e in c.get("examples", []):
             lines.append(f"• {e}")
 
     return "\n".join(lines)
@@ -204,6 +201,16 @@ def is_logic_gates_query(msg_clean: str) -> bool:
         s in {"logicgate", "logicgates"} or
         msg_clean.startswith("logic gate") or
         msg_clean.startswith("logic gates")
+    )
+
+# ------------------- Analogue electronics query -------------------
+def is_analog_electronics_query(msg_clean: str) -> bool:
+    s = msg_clean.replace(" ", "")
+    return (
+        msg_clean in {"analog electronics", "analogue electronics"} or
+        s in {"analogelectronics", "analogueelectronics"} or
+        msg_clean.startswith("analog") or
+        msg_clean.startswith("analogue")
     )
 
 # ------------------- Better series/parallel detection -------------------
@@ -220,19 +227,25 @@ def is_parallel_query(msg_clean: str) -> bool:
 def home():
     return render_template("index.html")
 
-# ------------------- Serve PDF pages as images -------------------
-@app.route("/pdf/page/<int:page_num>.png")
-def pdf_page_png(page_num: int):
+# ------------------- Serve PDF pages (ANY pdf in /pdfs) as images -------------------
+@app.route("/pdf/<pdf_name>/page/<int:page_num>.png")
+def pdf_page_png(pdf_name: str, page_num: int):
     if page_num < 1:
         return "Invalid page", 400
-    if not os.path.exists(PDF_PATH):
+
+    safe_name = os.path.basename(pdf_name)  # security: blocks ../ tricks
+    pdf_path = os.path.join(BASE_DIR, "pdfs", safe_name)
+
+    if not safe_name.lower().endswith(".pdf"):
+        return "Invalid file", 400
+    if not os.path.exists(pdf_path):
         return "PDF not found on server", 404
 
-    with fitz.open(PDF_PATH) as doc:
+    with fitz.open(pdf_path) as doc:
         if page_num > doc.page_count:
             return "Invalid page", 400
         page = doc.load_page(page_num - 1)
-        pix = page.get_pixmap(dpi=120)
+        pix = page.get_pixmap(dpi=150)
 
     return send_file(BytesIO(pix.tobytes("png")), mimetype="image/png")
 
@@ -302,7 +315,7 @@ def grade_quiz_answer(user_msg: str):
     if not correct_opt:
         return {"type": "chat", "text": "❌ This question has no valid 'answer_index' in QUIZ.json."}
 
-    user_opt = user_msg.strip()  # ✅ numbers only
+    user_opt = user_msg.strip()
 
     answered = int(session.get("quiz_answered", 0)) + 1
     correct = int(session.get("quiz_correct", 0))
@@ -390,9 +403,30 @@ def chat():
 
     # logic gates pdf
     if is_logic_gates_query(msg_clean):
-        images = [f"/pdf/page/{p}.png" for p in range(41, 57) if p not in {42, 43}]
+        images = [
+            f"/pdf/logic_gates.pdf/page/{p}.png"
+            for p in range(41, 57)
+            if p not in {42, 43}
+        ]
         session["awaiting_topic_pick"] = False
-        return jsonify({"type": "chat", "text": "📘 Logic Gates (Slides 41–57, excluding 42 & 43)", "images": images})
+        return jsonify({
+            "type": "chat",
+            "text": "📘 Logic Gates (Slides 41–57, excluding 42 & 43)",
+            "images": images
+        })
+
+    # analogue electronics pdf
+    if is_analog_electronics_query(msg_clean):
+        images = [
+            f"/pdf/ANALOGUE_ELECTRONICS.pdf/page/{p}.png"
+            for p in range(1, 13)
+        ]
+        session["awaiting_topic_pick"] = False
+        return jsonify({
+            "type": "chat",
+            "text": "📘 Analogue Electronics (Slides 1–12)",
+            "images": images
+        })
 
     # series/parallel (works anytime, even after /topic)
     if is_series_query(msg_clean):
@@ -543,4 +577,3 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
-
