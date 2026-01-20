@@ -341,7 +341,7 @@ def chat():
         ans = msg_clean
 
         if ans in YES_WORDS:
-            key = session.get("last_formula_key")  # ✅ correct key
+            key = session.get("last_formula_key")
             clear_formula_state()
 
             imgs = []
@@ -349,21 +349,55 @@ def chat():
                 imgs = circuits_data[key].get("formula_images", []) or []
 
             if imgs:
-                return jsonify({
-                    "type": "chat",
-                    "text": "Here are the formulas:",
-                    "images": imgs
-                })
+                return jsonify({"type": "chat", "text": "Here are the formulas:", "images": imgs})
 
             return jsonify({"type": "chat", "text": "Sorry, currently no formula available."})
 
         if ans in NO_WORDS:
             clear_formula_state()
-            return jsonify({"type": "chat", "text": "Alright. You may type /topic to learn more."})
+            return jsonify({"type": "chat", "text": "Alright. Please type /topic."})
 
         return jsonify({
             "type": "chat",
             "text": "Please reply with yes or no.\n\n📘 Would you like to see more formulas? (yes / no)"
+        })
+
+    # ------------------- series / parallel -------------------
+    if has_term(msg_clean, "series circuit") or has_term(msg_clean, "series"):
+        set_formula_state("series")
+        return jsonify({"type": "chat", "text": format_circuit_text("series") + FORMULA_PROMPT})
+
+    if has_term(msg_clean, "parallel circuit") or has_term(msg_clean, "parallel"):
+        set_formula_state("parallel")
+        return jsonify({"type": "chat", "text": format_circuit_text("parallel") + FORMULA_PROMPT})
+
+    # ------------------- /topic menu (ONLY /topic works) -------------------
+    if msg_clean == "/topic":
+        session["awaiting_topic_pick"] = True
+        return jsonify({"type": "chat", "text": format_topic_menu()})
+
+    # If we are inside topic picking mode, accept number OR topic name
+    if session.get("awaiting_topic_pick"):
+        # number selection
+        if msg_clean.isdigit():
+            topic_phrase = TOPIC_MENU.get(msg_clean)
+            if not topic_phrase:
+                return jsonify({"type": "chat", "text": "❌ Invalid selection. Reply with a valid number or type /topic again."})
+            session["awaiting_topic_pick"] = False
+            reply, _tag = _match_intent(topic_phrase)
+            return jsonify({"type": "chat", "text": reply})
+
+        # topic name selection
+        # match against TOPIC_MENU values
+        normalized_to_key = {normalize_text(v): k for k, v in TOPIC_MENU.items()}
+        if msg_clean in normalized_to_key:
+            session["awaiting_topic_pick"] = False
+            reply, _tag = _match_intent(msg_clean)  # pass the phrase
+            return jsonify({"type": "chat", "text": reply})
+
+        return jsonify({
+            "type": "chat",
+            "text": "❌ Please reply with a topic number (example: 6) or type the topic name.\nType /topic to see the menu again."
         })
 
     # ------------------- series / parallel (NOW matches inside sentences) -------------------
@@ -562,4 +596,5 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
