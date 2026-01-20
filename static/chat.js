@@ -20,9 +20,13 @@ window.addEventListener("DOMContentLoaded", () => {
 - /quiz  (list categories)
 - Type a number after /quiz (example: 6)
 - /topic (list topics)
-- Type a number after /topic (example: 6)
-- /clear (reset quiz/topic)
-Ask about Ohm’s law, logic gates, or resistors anytime.`;
+- Type a number after /topic (example: 7)
+- Type "Analog electronics" (Display BJT)
+- Type "series" or "parallel (Display explanation & formula)
+- Type "resistor" (Display formula)
+- Type "logic gate" (Display slides with explanation)
+- /clear (reset quiz/topic);
+
 
   function addLine(who, text) {
     const role = (who || "").toLowerCase(); // "you" or "bot"
@@ -590,3 +594,4 @@ Output is 1 only when inputs are DIFFERENT.
 1 1 → 0`;
   }
 }
+
