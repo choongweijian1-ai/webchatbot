@@ -277,7 +277,7 @@ def chat():
             session["awaiting_topic_pick"] = False
             return jsonify({
                 "type": "chat",
-                "text": "📘 Logic Gates (Slides 41–57)",
+                "text": "📘 Logic Gates (Slides 41–56)",
                 "images": images
             })
 
@@ -404,6 +404,7 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
