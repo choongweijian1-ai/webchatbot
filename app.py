@@ -238,7 +238,7 @@ def chat():
     if is_logic_gates_query(msg_clean):
         images = [
             f"/pdf/page/{p}.png"
-            for p in range(41, 58)    # 41..57
+            for p in range(41, 57)    # 41..56
             if p not in {42, 43}
         ]
         session["awaiting_topic_pick"] = False
@@ -401,6 +401,7 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
