@@ -6,6 +6,7 @@ import math
 import re
 from io import BytesIO
 
+# ✅ PyMuPDF (Render fix: add PyMuPDF to requirements.txt)
 import fitz  # PyMuPDF
 
 app = Flask(__name__)
@@ -38,7 +39,7 @@ try:
 except Exception:
     circuits_data = {}
 
-# ------------------- Load QUIZ.json safely (loaded but not used) -------------------
+# ------------------- Load QUIZ.json safely -------------------
 QUIZ_FILENAME = "QUIZ.json"
 QUIZ_PATH = os.path.join(BASE_DIR, QUIZ_FILENAME)
 
@@ -102,30 +103,6 @@ def format_topic_menu() -> str:
     lines.append('Or type the topic name (example: "binary number system").')
     return "\n".join(lines)
 
-# ------------------- Formula follow-up states -------------------
-YES_WORDS = {"yes", "y", "yeah", "yup", "sure", "ok", "okay"}
-NO_WORDS = {"no", "n", "nope", "nah"}
-
-FORMULA_PROMPT = "\n\n📘 Would you like to learn more? (yes / no)"
-
-def set_formula_state(key: str):
-    session["awaiting_formula_choice"] = True
-    session["last_formula_key"] = key
-
-def clear_formula_state():
-    session.pop("awaiting_formula_choice", None)
-    session.pop("last_formula_key", None)
-
-def clear_state():
-    session.pop("quiz_active", None)
-    session.pop("quiz_category", None)
-    session.pop("quiz_index", None)
-    session.pop("quiz_correct", None)
-    session.pop("quiz_answered", None)
-    session.pop("awaiting_quiz_pick", None)
-    session.pop("awaiting_topic_pick", None)
-    clear_formula_state()
-
 # ------------------- Text normalization + safe matching -------------------
 def normalize_text(s: str) -> str:
     s = (s or "").lower().strip()
@@ -165,6 +142,35 @@ def _match_intent(user_text: str):
 
     return random.choice(noanswer_intent.get("responses", ["Sorry, I didn't understand."])), "noanswer"
 
+# ------------------- Formula follow-up states -------------------
+YES_WORDS = {"yes", "y", "yeah", "yup", "sure", "ok", "okay"}
+NO_WORDS = {"no", "n", "nope", "nah"}
+
+FORMULA_PROMPT = "\n\n📘 Would you like to learn more? (yes / no)"
+
+def set_formula_state(key: str):
+    session["awaiting_formula_choice"] = True
+    session["last_formula_key"] = key
+
+def clear_formula_state():
+    session.pop("awaiting_formula_choice", None)
+    session.pop("last_formula_key", None)
+
+def clear_state():
+    # quiz state
+    session.pop("quiz_active", None)
+    session.pop("quiz_category", None)
+    session.pop("quiz_index", None)
+    session.pop("quiz_correct", None)
+    session.pop("quiz_answered", None)
+    session.pop("awaiting_quiz_pick", None)
+
+    # topic state
+    session.pop("awaiting_topic_pick", None)
+
+    # formula state
+    clear_formula_state()
+
 # ------------------- Explain command -------------------
 EXPLAIN_TOPICS = {"ohm", "and", "or", "not", "nand", "nor", "xor"}
 
@@ -185,6 +191,134 @@ def is_logic_gates_query(msg_clean: str) -> bool:
         msg_clean.startswith("logic gate") or
         msg_clean.startswith("logic gates")
     )
+
+# ------------------- Circuits formatting -------------------
+def format_circuit_text(key: str) -> str:
+    c = circuits_data.get(key)
+    if not c:
+        return "❌ Circuit topic not found."
+
+    lines = [f"📘 {c.get('title','')}", "", c.get("description",""), ""]
+    if c.get("key_points"):
+        lines.append("Key Points:")
+        for p in c["key_points"]:
+            lines.append(f"• {p}")
+        lines.append("")
+
+    if c.get("formulas"):
+        lines.append("Formulas:")
+        for f in c["formulas"]:
+            lines.append(f"• {f}")
+        lines.append("")
+
+    if c.get("examples"):
+        lines.append("Examples:")
+        for e in c["examples"]:
+            lines.append(f"• {e}")
+
+    return "\n".join(lines)
+
+# ------------------- Quiz helpers (NUMBERS ONLY 1-4) -------------------
+def format_quiz_menu() -> str:
+    if not isinstance(quiz_menu, dict) or not quiz_menu:
+        keys = sorted(list(quiz_data.keys()))
+        if not keys:
+            return "No quiz categories found."
+        lines = ["✅ Available quiz categories:"]
+        for i, k in enumerate(keys, start=1):
+            lines.append(f"{i}. {k}")
+        lines.append("")
+        lines.append("Reply with a number to start.")
+        return "\n".join(lines)
+
+    lines = ["✅ Available quiz categories:"]
+    for k in sorted(quiz_menu.keys(), key=lambda x: int(x)):
+        lines.append(f"{k}. {quiz_menu[k]}")
+    lines.append("")
+    lines.append("Reply with a number (example: 6) to start.")
+    return "\n".join(lines)
+
+def start_quiz_state(category: str, q_index_0based: int = 0):
+    session["quiz_active"] = True
+    session["quiz_category"] = category
+    session["quiz_index"] = int(q_index_0based)
+    session["quiz_correct"] = 0
+    session["quiz_answered"] = 0
+    session["awaiting_quiz_pick"] = False
+
+def is_quiz_answer(msg: str) -> bool:
+    if not msg:
+        return False
+    s = msg.strip()
+    return s.isdigit() and 1 <= int(s) <= 4
+
+def get_correct_option_number(q_obj: dict):
+    choices = q_obj.get("choices", [])
+    ans_i = q_obj.get("answer_index", None)
+    try:
+        ans_i = int(ans_i)
+    except Exception:
+        return None
+    if ans_i < 0 or ans_i >= len(choices):
+        return None
+    return str(ans_i + 1)
+
+def format_question_text(category: str, q_obj: dict, index_1based: int) -> str:
+    q = q_obj.get("q", "")
+    choices = q_obj.get("choices", [])
+    lines = [f"📘 Quiz: {category}", f"Q{index_1based}. {q}"]
+    for i, c in enumerate(choices, start=1):
+        lines.append(f"{i}) {c}")
+    lines.append("")
+    lines.append("Tip: reply 1–4")
+    return "\n".join(lines)
+
+def grade_quiz_answer(user_msg: str):
+    category = session.get("quiz_category")
+    idx0 = session.get("quiz_index")
+
+    if not category or category not in quiz_data or idx0 is None:
+        clear_state()
+        return {"type": "chat", "text": "❌ Quiz session lost. Type /quiz to start again."}
+
+    questions = quiz_data.get(category, [])
+    if not questions or idx0 < 0 or idx0 >= len(questions):
+        clear_state()
+        return {"type": "chat", "text": "❌ Quiz question not found. Type /quiz to start again."}
+
+    q_obj = questions[idx0]
+    correct_opt = get_correct_option_number(q_obj)
+    if not correct_opt:
+        return {"type": "chat", "text": "❌ This question has no valid answer_index in QUIZ.json."}
+
+    user_opt = user_msg.strip()
+
+    answered = int(session.get("quiz_answered", 0)) + 1
+    correct = int(session.get("quiz_correct", 0))
+    is_correct = (user_opt == correct_opt)
+    if is_correct:
+        correct += 1
+
+    session["quiz_answered"] = answered
+    session["quiz_correct"] = correct
+
+    explain = (q_obj.get("explain") or "").strip()
+    explain_block = f"\n\nExplanation:\n{explain}" if explain else ""
+    status = "✅ Correct!" if is_correct else "❌ Incorrect."
+
+    next_idx0 = idx0 + 1
+    if next_idx0 >= len(questions):
+        percent = (correct / answered) * 100 if answered else 0.0
+        grade_line = f"Grade: {correct}/{answered} ({percent:.0f}%)"
+        clear_state()
+        return {"type": "chat", "text": status + explain_block + f"\n\n{grade_line}\n\n🏁 End of quiz."}
+
+    session["quiz_index"] = next_idx0
+    next_q = questions[next_idx0]
+    return {
+        "type": "chat",
+        "text": status + explain_block + "\n\n" + format_question_text(category, next_q, next_idx0 + 1)
+    }
 
 # ------------------- Pages -------------------
 @app.route("/")
@@ -213,22 +347,59 @@ def pdf_page_png(page_num: int):
 def chat():
     payload = request.get_json(silent=True) or {}
     msg = (payload.get("message", "") or "")
-
-    # ✅ RAW command check FIRST (before normalize_text)
-    msg_raw = msg.strip().lower()
+    msg_raw = msg.strip().lower()  # raw for commands
 
     # Clear everything
     if msg_raw == "/clear":
         clear_state()
         return jsonify({"type": "chat", "text": "🧹 Cleared state."})
 
-    # ✅ ONLY /topic opens topic menu
+    # ✅ /topic opens topic menu
     if msg_raw == "/topic":
         session["awaiting_topic_pick"] = True
         return jsonify({"type": "chat", "text": format_topic_menu()})
 
-    # ✅ normalize after raw commands
+    # ✅ /quiz opens quiz menu
+    if msg_raw == "/quiz":
+        if quiz_error and not quiz_data:
+            return jsonify({"type": "chat", "text": f"Quiz error: {quiz_error}"})
+        if not quiz_data:
+            return jsonify({"type": "chat", "text": "No quiz categories found."})
+        session["awaiting_quiz_pick"] = True
+        return jsonify({"type": "chat", "text": format_quiz_menu()})
+
+    # normalize for everything else
     msg_clean = normalize_text(msg)
+
+    # ✅ If user is picking quiz category (after /quiz)
+    if session.get("awaiting_quiz_pick") and msg_clean.isdigit():
+        session["awaiting_quiz_pick"] = False
+        category = quiz_menu.get(msg_clean) if isinstance(quiz_menu, dict) else None
+
+        # fallback if quiz_menu missing
+        if not category:
+            keys = sorted(list(quiz_data.keys()))
+            try:
+                idx = int(msg_clean) - 1
+                category = keys[idx] if 0 <= idx < len(keys) else None
+            except Exception:
+                category = None
+
+        if not category or category not in quiz_data:
+            return jsonify({"type": "chat", "text": "❌ Invalid selection. Type /quiz to see the menu again."})
+
+        questions = quiz_data.get(category, [])
+        if not questions:
+            clear_state()
+            return jsonify({"type": "chat", "text": f"No questions found in category: {category}."})
+
+        start_quiz_state(category, 0)
+        q_obj = questions[0]
+        return jsonify({"type": "chat", "text": format_question_text(category, q_obj, 1)})
+
+    # ✅ If quiz is active, accept ONLY 1-4 answers
+    if session.get("quiz_active") and is_quiz_answer(msg):
+        return jsonify(grade_quiz_answer(msg))
 
     # ✅ explain ohm / explain and / explain not ...
     explain_topic = parse_explain_command(msg_clean)
@@ -237,11 +408,7 @@ def chat():
 
     # ✅ Logic gates slides (works anytime) — EXCLUDE 42 & 43
     if is_logic_gates_query(msg_clean):
-        images = [
-            f"/pdf/page/{p}.png"
-            for p in range(41, 58)  # 41..57
-            if p not in {42, 43}
-        ]
+        images = [f"/pdf/page/{p}.png" for p in range(41, 58) if p not in {42, 43}]
         session["awaiting_topic_pick"] = False
         return jsonify({
             "type": "chat",
@@ -268,12 +435,19 @@ def chat():
 
         if ans in NO_WORDS:
             clear_formula_state()
-            return jsonify({"type": "chat", "text": "Alright. You may type /topic to learn more."})
+            return jsonify({"type": "chat", "text": "Alright. You may type /topic or /quiz to learn more."})
 
-        return jsonify({
-            "type": "chat",
-            "text": "Please reply with yes or no.\n\n📘 Would you like to see more formulas? (yes / no)"
-        })
+        return jsonify({"type": "chat", "text": "Please reply with yes or no.\n\n📘 Would you like to learn more? (yes / no)"})
+
+    # ------------------- series / parallel (optional feature) -------------------
+    # If you want these removed, tell me and I’ll delete them.
+    if has_term(msg_clean, "series circuit") or has_term(msg_clean, "series"):
+        set_formula_state("series")
+        return jsonify({"type": "chat", "text": format_circuit_text("series") + FORMULA_PROMPT})
+
+    if has_term(msg_clean, "parallel circuit") or has_term(msg_clean, "parallel"):
+        set_formula_state("parallel")
+        return jsonify({"type": "chat", "text": format_circuit_text("parallel") + FORMULA_PROMPT})
 
     # ------------------- Topic selection mode (after /topic) -------------------
     if session.get("awaiting_topic_pick"):
