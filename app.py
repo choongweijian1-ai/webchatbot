@@ -218,39 +218,48 @@ def format_circuit_text(key: str) -> str:
 
     return "\n".join(lines)
 
-# ------------------- Quiz helpers (NUMBERS ONLY 1-4) -------------------
+# ------------------- Quiz helpers -------------------
 def format_quiz_menu() -> str:
-    if not isinstance(quiz_menu, dict) or not quiz_menu:
+    """
+    Shows quiz categories like:
+    1. number_systems
+    2. logic_gates
+    etc.
+    Uses quiz_menu if available, else uses quiz_data keys.
+    """
+    lines = ["✅ Available quiz categories:"]
+
+    if isinstance(quiz_menu, dict) and quiz_menu:
+        for k in sorted(quiz_menu.keys(), key=lambda x: int(x)):
+            lines.append(f"{k}. {quiz_menu[k]}")
+    else:
         keys = sorted(list(quiz_data.keys()))
-        if not keys:
-            return "No quiz categories found."
-        lines = ["✅ Available quiz categories:"]
         for i, k in enumerate(keys, start=1):
             lines.append(f"{i}. {k}")
-        lines.append("")
-        lines.append("Reply with a number to start.")
-        return "\n".join(lines)
 
-    lines = ["✅ Available quiz categories:"]
-    for k in sorted(quiz_menu.keys(), key=lambda x: int(x)):
-        lines.append(f"{k}. {quiz_menu[k]}")
     lines.append("")
-    lines.append("Reply with a number (example: 6) to start.")
+    lines.append("Reply with a number (example: 1) to start.")
     return "\n".join(lines)
 
-def start_quiz_state(category: str, q_index_0based: int = 0):
-    session["quiz_active"] = True
-    session["quiz_category"] = category
-    session["quiz_index"] = int(q_index_0based)
-    session["quiz_correct"] = 0
-    session["quiz_answered"] = 0
-    session["awaiting_quiz_pick"] = False
+
+def format_question_text(category: str, q_obj: dict, index_1based: int) -> str:
+    q = q_obj.get("q", "")
+    choices = q_obj.get("choices", [])
+    lines = [f"📘 Quiz: {category}", f"Q{index_1based}. {q}"]
+    for i, c in enumerate(choices, start=1):
+        lines.append(f"{i}) {c}")
+    lines.append("")
+    lines.append("Tip: reply 1–4")
+    return "\n".join(lines)
+
 
 def is_quiz_answer(msg: str) -> bool:
+    # ✅ numbers only (1-4)
     if not msg:
         return False
     s = msg.strip()
     return s.isdigit() and 1 <= int(s) <= 4
+
 
 def get_correct_option_number(q_obj: dict):
     choices = q_obj.get("choices", [])
@@ -263,35 +272,33 @@ def get_correct_option_number(q_obj: dict):
         return None
     return str(ans_i + 1)
 
-def format_question_text(category: str, q_obj: dict, index_1based: int) -> str:
-    q = q_obj.get("q", "")
-    choices = q_obj.get("choices", [])
-    lines = [f"📘 Quiz: {category}", f"Q{index_1based}. {q}"]
-    for i, c in enumerate(choices, start=1):
-        lines.append(f"{i}) {c}")
-    lines.append("")
-    lines.append("Tip: reply 1–4")
-    return "\n".join(lines)
+
+def start_quiz_state(category: str, q_index_0based: int):
+    session["quiz_active"] = True
+    session["quiz_category"] = category
+    session["quiz_index"] = int(q_index_0based)
+    session["quiz_correct"] = 0
+    session["quiz_answered"] = 0
+
 
 def grade_quiz_answer(user_msg: str):
     category = session.get("quiz_category")
     idx0 = session.get("quiz_index")
-
     if not category or category not in quiz_data or idx0 is None:
         clear_state()
-        return {"type": "chat", "text": "❌ Quiz session lost. Type /quiz to start again."}
+        return {"type": "chat", "text": "❌ Quiz session lost. Start again with:\n/quiz"}
 
     questions = quiz_data.get(category, [])
     if not questions or idx0 < 0 or idx0 >= len(questions):
         clear_state()
-        return {"type": "chat", "text": "❌ Quiz question not found. Type /quiz to start again."}
+        return {"type": "chat", "text": "❌ Quiz question not found. Start again with:\n/quiz"}
 
     q_obj = questions[idx0]
     correct_opt = get_correct_option_number(q_obj)
     if not correct_opt:
-        return {"type": "chat", "text": "❌ This question has no valid answer_index in QUIZ.json."}
+        return {"type": "chat", "text": "❌ This question has no valid 'answer_index' in QUIZ.json."}
 
-    user_opt = user_msg.strip()
+    user_opt = user_msg.strip()  # ✅ no A-D mapping
 
     answered = int(session.get("quiz_answered", 0)) + 1
     correct = int(session.get("quiz_correct", 0))
@@ -305,8 +312,8 @@ def grade_quiz_answer(user_msg: str):
     explain = (q_obj.get("explain") or "").strip()
     explain_block = f"\n\nExplanation:\n{explain}" if explain else ""
     status = "✅ Correct!" if is_correct else "❌ Incorrect."
-
     next_idx0 = idx0 + 1
+
     if next_idx0 >= len(questions):
         percent = (correct / answered) * 100 if answered else 0.0
         grade_line = f"Grade: {correct}/{answered} ({percent:.0f}%)"
@@ -315,32 +322,19 @@ def grade_quiz_answer(user_msg: str):
 
     session["quiz_index"] = next_idx0
     next_q = questions[next_idx0]
-    return {
-        "type": "chat",
-        "text": status + explain_block + "\n\n" + format_question_text(category, next_q, next_idx0 + 1)
-    }
+    q_text = format_question_text(category, next_q, next_idx0 + 1)
+    return {"type": "chat", "text": status + explain_block + "\n\n" + q_text}
 
-# ------------------- Pages -------------------
-@app.route("/")
-def home():
-    return render_template("index.html")
 
-# ------------------- Serve PDF pages as images -------------------
-@app.route("/pdf/page/<int:page_num>.png")
-def pdf_page_png(page_num: int):
-    if page_num < 1:
-        return "Invalid page", 400
+# ------------------- Better series/parallel detection -------------------
+def is_series_query(msg_clean: str) -> bool:
+    s = msg_clean.replace(" ", "")
+    return msg_clean in {"series", "series circuit"} or s in {"series", "seriescircuit"} or msg_clean.startswith("series")
 
-    if not os.path.exists(PDF_PATH):
-        return "PDF not found on server", 404
+def is_parallel_query(msg_clean: str) -> bool:
+    s = msg_clean.replace(" ", "")
+    return msg_clean in {"parallel", "parallel circuit"} or s in {"parallel", "parallelcircuit"} or msg_clean.startswith("parallel")
 
-    with fitz.open(PDF_PATH) as doc:
-        if page_num > doc.page_count:
-            return "Invalid page", 400
-        page = doc.load_page(page_num - 1)  # 0-based
-        pix = page.get_pixmap(dpi=120)
-
-    return send_file(BytesIO(pix.tobytes("png")), mimetype="image/png")
 
 # ------------------- Chat API -------------------
 @app.route("/chat", methods=["POST"])
@@ -374,16 +368,14 @@ def chat():
     # ✅ If user is picking quiz category (after /quiz)
     if session.get("awaiting_quiz_pick") and msg_clean.isdigit():
         session["awaiting_quiz_pick"] = False
-        category = quiz_menu.get(msg_clean) if isinstance(quiz_menu, dict) else None
 
-        # fallback if quiz_menu missing
-        if not category:
+        category = None
+        if isinstance(quiz_menu, dict) and quiz_menu:
+            category = quiz_menu.get(msg_clean)
+        else:
             keys = sorted(list(quiz_data.keys()))
-            try:
-                idx = int(msg_clean) - 1
-                category = keys[idx] if 0 <= idx < len(keys) else None
-            except Exception:
-                category = None
+            idx = int(msg_clean) - 1
+            category = keys[idx] if 0 <= idx < len(keys) else None
 
         if not category or category not in quiz_data:
             return jsonify({"type": "chat", "text": "❌ Invalid selection. Type /quiz to see the menu again."})
@@ -416,6 +408,15 @@ def chat():
             "images": images
         })
 
+    # ✅ Series / Parallel circuits MUST be BEFORE topic-pick mode
+    if is_series_query(msg_clean):
+        set_formula_state("series")
+        return jsonify({"type": "chat", "text": format_circuit_text("series") + FORMULA_PROMPT})
+
+    if is_parallel_query(msg_clean):
+        set_formula_state("parallel")
+        return jsonify({"type": "chat", "text": format_circuit_text("parallel") + FORMULA_PROMPT})
+
     # ------------------- yes/no after formula prompt -------------------
     if session.get("awaiting_formula_choice"):
         ans = msg_clean
@@ -438,16 +439,6 @@ def chat():
             return jsonify({"type": "chat", "text": "Alright. You may type /topic or /quiz to learn more."})
 
         return jsonify({"type": "chat", "text": "Please reply with yes or no.\n\n📘 Would you like to learn more? (yes / no)"})
-
-    # ------------------- series / parallel (optional feature) -------------------
-    # If you want these removed, tell me and I’ll delete them.
-    if has_term(msg_clean, "series circuit") or has_term(msg_clean, "series"):
-        set_formula_state("series")
-        return jsonify({"type": "chat", "text": format_circuit_text("series") + FORMULA_PROMPT})
-
-    if has_term(msg_clean, "parallel circuit") or has_term(msg_clean, "parallel"):
-        set_formula_state("parallel")
-        return jsonify({"type": "chat", "text": format_circuit_text("parallel") + FORMULA_PROMPT})
 
     # ------------------- Topic selection mode (after /topic) -------------------
     if session.get("awaiting_topic_pick"):
@@ -477,6 +468,7 @@ def chat():
     # ------------------- Normal chatbot (uses intents.json) -------------------
     reply, _tag = _match_intent(msg)
     return jsonify({"type": "chat", "text": reply})
+
 
 # ------------------- Ohm's Law API -------------------
 def _to_float(x):
@@ -574,3 +566,4 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
