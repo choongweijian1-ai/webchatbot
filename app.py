@@ -198,7 +198,7 @@ def pdf_page_png(page_num: int):
 
     return send_file(BytesIO(pix.tobytes("png")), mimetype="image/png")
 
-# ------------------- Chat API (STRICT: ONLY /topic works) -------------------
+# ------------------- Chat API -------------------
 @app.route("/chat", methods=["POST"])
 def chat():
     payload = request.get_json(silent=True) or {}
@@ -212,28 +212,54 @@ def chat():
         clear_state()
         return jsonify({"type": "chat", "text": "🧹 Cleared state."})
 
-    # ✅ /topic menu (ONLY /topic starts it)
+    # ✅ ONLY /topic opens topic menu
     if msg_raw == "/topic":
         session["awaiting_topic_pick"] = True
         return jsonify({"type": "chat", "text": format_topic_menu()})
 
-    # ✅ now normalize for all other logic
+    # ✅ normalize after raw commands
     msg_clean = normalize_text(msg)
 
-    # ---- Special: show Logic Gates slides (41–57) when user types "logic gates" ----
-    # This works ONLY after user has started /topic (strict flow), because it's inside awaiting_topic_pick.
-    if session.get("awaiting_topic_pick") and msg_clean == "logic gates":
-        images = [f"/pdf/page/{p}.png" for p in range(41, 58)]  # 41..57 inclusive
-        session["awaiting_topic_pick"] = False
+    # ------------------- yes/no after formula prompt -------------------
+    if session.get("awaiting_formula_choice"):
+        ans = msg_clean
+
+        if ans in YES_WORDS:
+            key = session.get("last_formula_key")
+            clear_formula_state()
+
+            imgs = []
+            if key and key in circuits_data:
+                imgs = circuits_data[key].get("formula_images", []) or []
+
+            if imgs:
+                return jsonify({"type": "chat", "text": "Here are the formulas:", "images": imgs})
+
+            return jsonify({"type": "chat", "text": "Sorry, currently no formula available."})
+
+        if ans in NO_WORDS:
+            clear_formula_state()
+            return jsonify({"type": "chat", "text": "Alright. You may type /topic to learn more."})
+
         return jsonify({
             "type": "chat",
-            "text": "📘 Logic Gates (Slides 41–57)",
-            "images": images
+            "text": "Please reply with yes or no.\n\n📘 Would you like to see more formulas? (yes / no)"
         })
 
     # ------------------- Topic selection mode (after /topic) -------------------
     if session.get("awaiting_topic_pick"):
-        # number selection (e.g. 6)
+
+        # ✅ Special: show PDF pages 41–57 for "logic gates"
+        if msg_clean == "logic gates":
+            images = [f"/pdf/page/{p}.png" for p in range(41, 58)]  # 41..57
+            session["awaiting_topic_pick"] = False
+            return jsonify({
+                "type": "chat",
+                "text": "📘 Logic Gates (Slides 41–57)",
+                "images": images
+            })
+
+        # number selection
         if msg_clean.isdigit():
             topic_phrase = TOPIC_MENU.get(msg_clean)
             if not topic_phrase:
@@ -243,7 +269,7 @@ def chat():
             reply, _tag = _match_intent(topic_phrase)
             return jsonify({"type": "chat", "text": reply})
 
-        # topic name selection (e.g. "binary number system")
+        # topic name selection
         normalized_menu = {normalize_text(v): v for v in TOPIC_MENU.values()}
         if msg_clean in normalized_menu:
             session["awaiting_topic_pick"] = False
@@ -255,8 +281,9 @@ def chat():
             "text": "❌ Please reply with a topic number (example: 6) or type the topic name.\nType /topic to see the menu again."
         })
 
-    # ------------------- FINAL GATE (everything else blocked) -------------------
-    return jsonify({"type": "chat", "text": "pls type /topic"})
+    # ------------------- Normal chatbot (uses intents.json) -------------------
+    reply, _tag = _match_intent(msg)
+    return jsonify({"type": "chat", "text": reply})
 
 
 # ------------------- Ohm's Law API -------------------
@@ -355,3 +382,4 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
