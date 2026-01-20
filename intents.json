@@ -339,7 +339,8 @@
         "start learning"
       ],
       "responses": [
-        "Alright. Whenever you are ready, type /topic or /quiz."
+        "Alright. Whenever you are ready, type \"/topic\" or \"/quiz\"."
+
       ]
     }
     {
@@ -351,6 +352,7 @@
     }
   ]
 }
+
 
 
 
