@@ -32,7 +32,7 @@ try:
 except Exception:
     circuits_data = {}
 
-# ------------------- Load QUIZ.json safely -------------------
+# ------------------- Load QUIZ.json safely (still loaded, but commands disabled) -------------------
 QUIZ_FILENAME = "QUIZ.json"
 QUIZ_PATH = os.path.join(BASE_DIR, QUIZ_FILENAME)
 
@@ -43,10 +43,8 @@ quiz_error = None
 try:
     with open(QUIZ_PATH, "r", encoding="utf-8") as f:
         quiz_file = json.load(f)
-
     quiz_data = quiz_file.get("quizzes", {})
     quiz_menu = quiz_file.get("quiz_menu", {})
-
 except FileNotFoundError:
     quiz_error = f"{QUIZ_FILENAME} not found in repo root."
 except json.JSONDecodeError as e:
@@ -106,14 +104,14 @@ FORMULA_PROMPT = "\n\n📘 Would you like to learn more? (yes / no)"
 
 def set_formula_state(key: str):
     session["awaiting_formula_choice"] = True
-    session["last_formula_key"] = key  # ✅ consistent key name
+    session["last_formula_key"] = key
 
 def clear_formula_state():
     session.pop("awaiting_formula_choice", None)
     session.pop("last_formula_key", None)
 
 def clear_state():
-    # quiz state
+    # quiz state (kept for safety, even though quiz commands are disabled)
     session.pop("quiz_active", None)
     session.pop("quiz_category", None)
     session.pop("quiz_index", None)
@@ -130,18 +128,15 @@ def clear_state():
 # ------------------- Text normalization + safe matching -------------------
 def normalize_text(s: str) -> str:
     s = (s or "").lower().strip()
-    # remove punctuation; keep letters/numbers/spaces so word boundaries behave
     s = re.sub(r"[^a-z0-9\s]+", " ", s)
     s = re.sub(r"\s+", " ", s)
     return s
 
 def has_term(text: str, term: str) -> bool:
-    # whole-word / whole-phrase match (avoids serious->series)
     return re.search(rf"\b{re.escape(term)}\b", text) is not None
 
 # ------------------- Bot matcher -------------------
 def _match_intent(user_text: str):
-    # ✅ normalize the same way everywhere
     user_text = normalize_text(user_text)
 
     pattern_list = []
@@ -161,9 +156,8 @@ def _match_intent(user_text: str):
     if len(user_text) <= 2:
         return random.choice(noanswer_intent.get("responses", ["Sorry, I didn't understand."])), "noanswer"
 
-    # phrase/word-boundary match next (safer than raw substring)
+    # word-boundary match
     for pattern_lower, intent in pattern_list:
-        # match pattern as a whole phrase
         if has_term(user_text, pattern_lower):
             responses = intent.get("responses", [])
             return (random.choice(responses) if responses else "OK."), intent.get("tag", "noanswer")
@@ -201,130 +195,7 @@ def format_circuit_text(key: str) -> str:
 def home():
     return render_template("index.html")
 
-# ------------------- Explain commands -------------------
-EXPLAIN_TOPICS = {"ohm", "and", "or", "not", "nand", "nor", "xor"}
-
-def parse_explain_command(msg: str):
-    if not msg:
-        return None
-    m = re.match(r"^\s*explain\s+([a-zA-Z']+)\s*$", (msg or "").strip().lower())
-    if not m:
-        return None
-    topic = m.group(1).replace("'", "")
-    return topic if topic in EXPLAIN_TOPICS else None
-
-# ------------------- Quiz command parsing -------------------
-def parse_quiz_command(msg: str):
-    if not msg:
-        return None
-    msg = msg.strip()
-    if not msg.lower().startswith("/quiz"):
-        return None
-
-    parts = msg.split()
-    if len(parts) == 1:
-        return {"mode": "list"}
-
-    category = parts[1].strip().lower()
-
-    if len(parts) >= 3 and parts[2].strip().lower() == "random":
-        return {"mode": "random", "category": category}
-
-    if len(parts) >= 3:
-        try:
-            qnum = int(parts[2])
-            return {"mode": "number", "category": category, "qnum": qnum}
-        except Exception:
-            return {"mode": "category", "category": category}
-
-    return {"mode": "category", "category": category}
-
-def format_question_text(category: str, q_obj: dict, index_1based: int) -> str:
-    q = q_obj.get("q", "")
-    choices = q_obj.get("choices", [])
-    lines = [f"📘 Quiz: {category}", f"Q{index_1based}. {q}"]
-    for i, c in enumerate(choices, start=1):
-        lines.append(f"{i}) {c}")
-    lines.append("")
-    lines.append("Tip: reply 1-4")
-    return "\n".join(lines)
-
-def is_quiz_answer(msg: str) -> bool:
-    if not msg:
-        return False
-    s = msg.strip().lower()
-    if s in {"a", "b", "c", "d"}:
-        return True
-    return s.isdigit() and 1 <= int(s) <= 9
-
-def normalize_answer(msg: str) -> str:
-    s = msg.strip().lower()
-    mapping = {"a": "1", "b": "2", "c": "3", "d": "4"}
-    return mapping.get(s, s)
-
-def get_correct_option_number(q_obj: dict):
-    choices = q_obj.get("choices", [])
-    ans_i = q_obj.get("answer_index", None)
-    try:
-        ans_i = int(ans_i)
-    except Exception:
-        return None
-    if ans_i < 0 or ans_i >= len(choices):
-        return None
-    return str(ans_i + 1)
-
-def start_quiz_state(category: str, q_index_0based: int):
-    session["quiz_active"] = True
-    session["quiz_category"] = category
-    session["quiz_index"] = int(q_index_0based)
-    session["quiz_correct"] = 0
-    session["quiz_answered"] = 0
-
-def grade_quiz_answer(user_msg: str):
-    category = session.get("quiz_category")
-    idx0 = session.get("quiz_index")
-    if not category or category not in quiz_data or idx0 is None:
-        clear_state()
-        return {"type": "chat", "text": "❌ Quiz session lost. Start again with:\n/quiz"}
-
-    questions = quiz_data.get(category, [])
-    if not questions or idx0 < 0 or idx0 >= len(questions):
-        clear_state()
-        return {"type": "chat", "text": "❌ Quiz question not found. Start again with:\n/quiz"}
-
-    q_obj = questions[idx0]
-    correct_opt = get_correct_option_number(q_obj)
-    if not correct_opt:
-        return {"type": "chat", "text": "❌ This question has no valid 'answer_index' field in QUIZ.json."}
-
-    user_opt = normalize_answer(user_msg)
-
-    answered = int(session.get("quiz_answered", 0)) + 1
-    correct = int(session.get("quiz_correct", 0))
-    is_correct = (user_opt == correct_opt)
-    if is_correct:
-        correct += 1
-
-    session["quiz_answered"] = answered
-    session["quiz_correct"] = correct
-
-    explain = (q_obj.get("explain") or "").strip()
-    explain_block = f"\n\nExplanation:\n{explain}" if explain else ""
-    status = "✅ Correct!" if is_correct else "❌ Incorrect."
-    next_idx0 = idx0 + 1
-
-    if next_idx0 >= len(questions):
-        percent = (correct / answered) * 100 if answered else 0.0
-        grade_line = f"Grade: {correct}/{answered} ({percent:.0f}%)"
-        clear_state()
-        return {"type": "chat", "text": status + explain_block + f"\n\n{grade_line}\n\n🏁 End of quiz."}
-
-    session["quiz_index"] = next_idx0
-    next_q = questions[next_idx0]
-    q_text = format_question_text(category, next_q, next_idx0 + 1)
-    return {"type": "chat", "text": status + explain_block + "\n\n" + q_text}
-
-# ------------------- Chat API -------------------
+# ------------------- Chat API (STRICT: ONLY /topic works) -------------------
 @app.route("/chat", methods=["POST"])
 def chat():
     payload = request.get_json(silent=True) or {}
@@ -362,7 +233,8 @@ def chat():
             "text": "Please reply with yes or no.\n\n📘 Would you like to see more formulas? (yes / no)"
         })
 
-    # ------------------- series / parallel -------------------
+    # ------------------- series / parallel (still allowed) -------------------
+    # If you want even these to be blocked unless /topic, tell me and I’ll gate them too.
     if has_term(msg_clean, "series circuit") or has_term(msg_clean, "series"):
         set_formula_state("series")
         return jsonify({"type": "chat", "text": format_circuit_text("series") + FORMULA_PROMPT})
@@ -371,28 +243,27 @@ def chat():
         set_formula_state("parallel")
         return jsonify({"type": "chat", "text": format_circuit_text("parallel") + FORMULA_PROMPT})
 
-    # ------------------- /topic menu (ONLY /topic works) -------------------
+    # ------------------- /topic menu (ONLY /topic starts it) -------------------
     if msg_clean == "/topic":
         session["awaiting_topic_pick"] = True
         return jsonify({"type": "chat", "text": format_topic_menu()})
 
-    # If we are inside topic picking mode, accept number OR topic name
+    # ------------------- Topic selection mode -------------------
     if session.get("awaiting_topic_pick"):
         # number selection
         if msg_clean.isdigit():
             topic_phrase = TOPIC_MENU.get(msg_clean)
             if not topic_phrase:
-                return jsonify({"type": "chat", "text": "❌ Invalid selection. Reply with a valid number or type /topic again."})
+                return jsonify({"type": "chat", "text": "❌ Invalid selection. Type /topic to see the menu again."})
             session["awaiting_topic_pick"] = False
             reply, _tag = _match_intent(topic_phrase)
             return jsonify({"type": "chat", "text": reply})
 
         # topic name selection
-        # match against TOPIC_MENU values
-        normalized_to_key = {normalize_text(v): k for k, v in TOPIC_MENU.items()}
-        if msg_clean in normalized_to_key:
+        normalized_menu = {normalize_text(v): v for v in TOPIC_MENU.values()}
+        if msg_clean in normalized_menu:
             session["awaiting_topic_pick"] = False
-            reply, _tag = _match_intent(msg_clean)  # pass the phrase
+            reply, _tag = _match_intent(normalized_menu[msg_clean])
             return jsonify({"type": "chat", "text": reply})
 
         return jsonify({
@@ -400,105 +271,8 @@ def chat():
             "text": "❌ Please reply with a topic number (example: 6) or type the topic name.\nType /topic to see the menu again."
         })
 
-    # ------------------- series / parallel (NOW matches inside sentences) -------------------
-    # more specific first
-    if has_term(msg_clean, "series circuit") or has_term(msg_clean, "series"):
-        set_formula_state("series")
-        return jsonify({"type": "chat", "text": format_circuit_text("series") + FORMULA_PROMPT})
-
-    if has_term(msg_clean, "parallel circuit") or has_term(msg_clean, "parallel"):
-        set_formula_state("parallel")
-        return jsonify({"type": "chat", "text": format_circuit_text("parallel") + FORMULA_PROMPT})
-
-    # ------------------- /topic menu -------------------
-    if msg_clean in {"/topic", "topic", "topics", "show topics", "topic menu"}:
-        session["awaiting_topic_pick"] = True
-        return jsonify({"type": "chat", "text": format_topic_menu()})
-
-    if session.get("awaiting_topic_pick") and msg_clean.isdigit():
-        session["awaiting_topic_pick"] = False
-        topic_phrase = TOPIC_MENU.get(msg_clean)
-        if not topic_phrase:
-            return jsonify({"type": "chat", "text": "❌ Invalid selection. Type /topic to see the menu again."})
-        reply, _tag = _match_intent(topic_phrase)
-        return jsonify({"type": "chat", "text": reply})
-
-    # ------------------- Quiz pick (numeric) after /quiz -------------------
-    if session.get("awaiting_quiz_pick") and msg_clean.isdigit():
-        session["awaiting_quiz_pick"] = False
-        category = quiz_menu.get(msg_clean) if isinstance(quiz_menu, dict) else None
-        if not category or category not in quiz_data:
-            return jsonify({"type": "chat", "text": "❌ Invalid selection. Type /quiz to see the menu again."})
-
-        questions = quiz_data.get(category, [])
-        if not questions:
-            clear_state()
-            return jsonify({"type": "chat", "text": f"No questions found in category: {category}."})
-
-        start_quiz_state(category, 0)
-        q_obj = questions[0]
-        if not get_correct_option_number(q_obj):
-            return jsonify({"type": "chat", "text": "❌ This question has no valid 'answer_index' field in QUIZ.json."})
-        return jsonify({"type": "chat", "text": format_question_text(category, q_obj, 1)})
-
-    if session.get("quiz_active") and is_quiz_answer(msg):
-        return jsonify(grade_quiz_answer(msg))
-
-    # Explain commands
-    explain_topic = parse_explain_command(msg)
-    if explain_topic:
-        return jsonify({"type": "explain", "topic": explain_topic})
-
-    # Quiz commands
-    quiz_cmd = parse_quiz_command(msg)
-    if quiz_cmd:
-        if quiz_error and not quiz_data:
-            return jsonify({"type": "chat", "text": f"Quiz error: {quiz_error}"})
-
-        if quiz_cmd["mode"] == "list":
-            session["awaiting_quiz_pick"] = True
-            if not quiz_data:
-                return jsonify({"type": "chat", "text": "No quiz categories found."})
-            if isinstance(quiz_menu, dict) and quiz_menu:
-                lines = ["✅ Available quiz categories:"]
-                for k in sorted(quiz_menu.keys(), key=lambda x: int(x)):
-                    lines.append(f"{k}. {quiz_menu[k]}")
-                lines.append("")
-                lines.append("Reply with a number (example: 6) to start.")
-                lines.append("Or type: /quiz number_systems")
-                return jsonify({"type": "chat", "text": "\n".join(lines)})
-
-        category = quiz_cmd.get("category", "")
-        if category not in quiz_data:
-            available = ", ".join(sorted(quiz_data.keys())) if quiz_data else "(none)"
-            return jsonify({"type": "chat", "text": f"❌ Unknown quiz category: {category}\nAvailable: {available}\n\nTry:\n/quiz"})
-
-        questions = quiz_data[category]
-        if not questions:
-            return jsonify({"type": "chat", "text": f"No questions found in category: {category}."})
-
-        if quiz_cmd["mode"] == "random":
-            q_obj = random.choice(questions)
-            idx0 = questions.index(q_obj)
-            start_quiz_state(category, idx0)
-            return jsonify({"type": "chat", "text": format_question_text(category, q_obj, idx0 + 1)})
-
-        if quiz_cmd["mode"] == "number":
-            qnum = quiz_cmd.get("qnum", 1)
-            if qnum < 1 or qnum > len(questions):
-                return jsonify({"type": "chat", "text": f"Question number out of range. Pick 1 to {len(questions)}."})
-            idx0 = qnum - 1
-            q_obj = questions[idx0]
-            start_quiz_state(category, idx0)
-            return jsonify({"type": "chat", "text": format_question_text(category, q_obj, qnum)})
-
-        q_obj = questions[0]
-        start_quiz_state(category, 0)
-        return jsonify({"type": "chat", "text": format_question_text(category, q_obj, 1)})
-
-    # Normal chatbot
-    reply, _tag = _match_intent(msg)
-    return jsonify({"type": "chat", "text": reply})
+    # ------------------- FINAL GATE -------------------
+    return jsonify({"type": "chat", "text": "pls type /topic"})
 
 # ------------------- Ohm's Law API -------------------
 def _to_float(x):
@@ -596,5 +370,3 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
-
-
