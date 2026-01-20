@@ -326,7 +326,7 @@
       "tag": "topic",
       "patterns": ["/topic", "topic", "topics", "show topics", "topic menu"],
       "responses": [
-        "📘 Available Topics:\n\n1. Analog Signals\n2. Digital Signal\n3. Logic Levels\n4. Number Systems\n5. Decimal Number System\n6. Binary Number System\n7. Hexadecimal Number System\n8. Combinational Logic Circuits\n9. SOP (Sum of Products)\n10. POS (Product of Sums)\n11. Minterm vs Maxterm\n12. Truth Table Conversion\n13. Boolean Algebra\n14. Logic Simplification\n15. De Morgan’s Theorem\n16. Universal Gates\n17. Karnaugh Map\n18. K-Map Grouping Rules\n19. Don’t Care Conditions\n20. Seven Segment Display\n21. Common Anode vs Common Cathode\n22. Basic Binary Addition\n22. Half Adder\n24. Full Adder\n25. Parallel Binary Adder\n26. Ripple Carry Adder\n27. Look-Ahead Carry Adder\n28. Signed Binary Numbers\n29. Sign Magnitude Representation\n30. 1’s Complement\n31. 2’s Complement\n32. 2’s Complement Addition\n33. Range of Signed Numbers\n\n👉 Type the topic name or the topic number to continue."
+        "📘 Available knowledge-based topic:\n\n1. Analog Signals\n2. Digital Signal\n3. Logic Levels\n4. Number Systems\n5. Decimal Number System\n6. Binary Number System\n7. Hexadecimal Number System\n8. Combinational Logic Circuits\n9. SOP (Sum of Products)\n10. POS (Product of Sums)\n11. Minterm vs Maxterm\n12. Truth Table Conversion\n13. Boolean Algebra\n14. Logic Simplification\n15. De Morgan’s Theorem\n16. Universal Gates\n17. Karnaugh Map\n18. K-Map Grouping Rules\n19. Don’t Care Conditions\n20. Seven Segment Display\n21. Common Anode vs Common Cathode\n22. Basic Binary Addition\n22. Half Adder\n24. Full Adder\n25. Parallel Binary Adder\n26. Ripple Carry Adder\n27. Look-Ahead Carry Adder\n28. Signed Binary Numbers\n29. Sign Magnitude Representation\n30. 1’s Complement\n31. 2’s Complement\n32. 2’s Complement Addition\n33. Range of Signed Numbers\n\n👉 Type the topic name or the topic number to continue."
       ]
     },
     {
@@ -340,5 +340,6 @@
     }
   ]
 }
+
 
 
