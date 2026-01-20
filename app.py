@@ -198,6 +198,19 @@ def pdf_page_png(page_num: int):
 
     return send_file(BytesIO(pix.tobytes("png")), mimetype="image/png")
 
+def is_logic_gates_query(msg_clean: str) -> bool:
+    """
+    msg_clean is already normalize_text(msg) (only letters/numbers/spaces)
+    """
+    s = msg_clean.replace(" ", "")  # "logic gates" -> "logicgates"
+    return (
+        msg_clean in {"logic gate", "logic gates"} or
+        s == "logicgate" or
+        s == "logicgates" or
+        msg_clean.startswith("logic gate") or
+        msg_clean.startswith("logic gates")
+    )
+
 # ------------------- Chat API -------------------
 @app.route("/chat", methods=["POST"])
 def chat():
@@ -219,6 +232,15 @@ def chat():
 
     # ✅ normalize after raw commands
     msg_clean = normalize_text(msg)
+    # ✅ Special: show PDF pages 41–57 for logic gates (works anytime)
+    if is_logic_gates_query(msg_clean):
+        images = [f"/pdf/page/{p}.png" for p in range(41, 58)]  # 41..57
+        return jsonify({
+            "type": "chat",
+            "text": "📘 Logic Gates (Slides 41–57)",
+            "images": images
+        })
+
 
     # ------------------- yes/no after formula prompt -------------------
     if session.get("awaiting_formula_choice"):
@@ -382,5 +404,6 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
