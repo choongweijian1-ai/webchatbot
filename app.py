@@ -199,13 +199,23 @@ def home():
 @app.route("/chat", methods=["POST"])
 def chat():
     payload = request.get_json(silent=True) or {}
-    msg = payload.get("message", "")
-    msg_clean = normalize_text(msg)
+    msg = (payload.get("message", "") or "")
+
+    # ✅ RAW command check FIRST (before normalize_text)
+    msg_raw = msg.strip().lower()
 
     # Clear everything
-    if msg_clean == "/clear":
+    if msg_raw == "/clear":
         clear_state()
         return jsonify({"type": "chat", "text": "🧹 Cleared state."})
+
+    # ✅ /topic menu (ONLY /topic starts it)
+    if msg_raw == "/topic":
+        session["awaiting_topic_pick"] = True
+        return jsonify({"type": "chat", "text": format_topic_menu()})
+
+    # ✅ now normalize for all other logic
+    msg_clean = normalize_text(msg)
 
     # ------------------- yes/no after formula prompt -------------------
     if session.get("awaiting_formula_choice"):
@@ -232,6 +242,34 @@ def chat():
             "type": "chat",
             "text": "Please reply with yes or no.\n\n📘 Would you like to see more formulas? (yes / no)"
         })
+
+    # ------------------- Topic selection mode (after /topic) -------------------
+    if session.get("awaiting_topic_pick"):
+        # number selection (e.g. 6)
+        if msg_clean.isdigit():
+            topic_phrase = TOPIC_MENU.get(msg_clean)
+            if not topic_phrase:
+                return jsonify({"type": "chat", "text": "❌ Invalid selection. Type /topic to see the menu again."})
+
+            session["awaiting_topic_pick"] = False
+            reply, _tag = _match_intent(topic_phrase)
+            return jsonify({"type": "chat", "text": reply})
+
+        # topic name selection (e.g. "binary number system")
+        normalized_menu = {normalize_text(v): v for v in TOPIC_MENU.values()}
+        if msg_clean in normalized_menu:
+            session["awaiting_topic_pick"] = False
+            reply, _tag = _match_intent(normalized_menu[msg_clean])
+            return jsonify({"type": "chat", "text": reply})
+
+        return jsonify({
+            "type": "chat",
+            "text": "❌ Please reply with a topic number (example: 6) or type the topic name.\nType /topic to see the menu again."
+        })
+
+    # ------------------- FINAL GATE (everything else blocked) -------------------
+    return jsonify({"type": "chat", "text": "pls type /topic"})
+
 
     # ------------------- series / parallel (still allowed) -------------------
     # If you want even these to be blocked unless /topic, tell me and I’ll gate them too.
@@ -370,3 +408,4 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
