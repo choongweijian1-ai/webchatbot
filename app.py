@@ -239,7 +239,7 @@ def chat():
 
         if ans in NO_WORDS:
             clear_formula_state()
-            return jsonify({"type": "chat", "text": "Alright. You may type /topic to learn more."})
+            return jsonify({"type": "chat", "text": "Alright. You may type /topic or /notes to learn more."})
 
         return jsonify({
             "type": "chat",
@@ -382,4 +382,5 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
