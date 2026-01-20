@@ -211,6 +211,7 @@ def is_logic_gates_query(msg_clean: str) -> bool:
         msg_clean.startswith("logic gates")
     )
 
+
 # ------------------- Chat API -------------------
 @app.route("/chat", methods=["POST"])
 def chat():
@@ -232,15 +233,21 @@ def chat():
 
     # ✅ normalize after raw commands
     msg_clean = normalize_text(msg)
-    # ✅ Special: show PDF pages 41–57 for logic gates (works anytime)
+
+    # ✅ Logic gates slides (works anytime) — EXCLUDE 42 & 43
     if is_logic_gates_query(msg_clean):
-        images = [f"/pdf/page/{p}.png" for p in range(41, 58)]  # 41..57
+        images = [
+            f"/pdf/page/{p}.png"
+            for p in range(41, 58)    # 41..57
+            if p not in {42, 43}
+        ]
+        # optional: exit topic mode if they were in it
+        session["awaiting_topic_pick"] = False
         return jsonify({
             "type": "chat",
-            "text": "📘 Logic Gates (Slides 41–57)",
+            "text": "📘 Logic Gates (Slides 41–57, excluding 42 & 43)",
             "images": images
         })
-
 
     # ------------------- yes/no after formula prompt -------------------
     if session.get("awaiting_formula_choice"):
@@ -261,7 +268,7 @@ def chat():
 
         if ans in NO_WORDS:
             clear_formula_state()
-            return jsonify({"type": "chat", "text": "Alright. You may type /topic or /notes to learn more."})
+            return jsonify({"type": "chat", "text": "Alright. You may type /topic to learn more."})
 
         return jsonify({
             "type": "chat",
@@ -270,16 +277,6 @@ def chat():
 
     # ------------------- Topic selection mode (after /topic) -------------------
     if session.get("awaiting_topic_pick"):
-
-        # ✅ Special: show PDF pages 41–57 for "logic gates"
-        if msg_clean == "logic gates":
-            images = [f"/pdf/page/{p}.png" for p in range(41, 58)]  # 41..57
-            session["awaiting_topic_pick"] = False
-            return jsonify({
-                "type": "chat",
-                "text": "📘 Logic Gates (Slides 41–56)",
-                "images": images
-            })
 
         # number selection
         if msg_clean.isdigit():
@@ -404,6 +401,7 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
