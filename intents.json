@@ -342,7 +342,7 @@
         "Alright. Whenever you are ready, type \"/topic\" or \"/quiz\"."
 
       ]
-    }
+    },
     {
       "tag": "noanswer",
       "patterns": [],
@@ -352,6 +352,7 @@
     }
   ]
 }
+
 
 
 
