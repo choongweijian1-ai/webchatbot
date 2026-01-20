@@ -102,7 +102,7 @@ def format_topic_menu() -> str:
 YES_WORDS = {"yes", "y", "yeah", "yup", "sure", "ok", "okay"}
 NO_WORDS = {"no", "n", "nope", "nah"}
 
-FORMULA_PROMPT = "\n\n📘 Would you like to see more formulas? (yes / no)"
+FORMULA_PROMPT = "\n\n📘 Would you like to learn more? (yes / no)"
 
 def set_formula_state(key: str):
     session["awaiting_formula_choice"] = True
@@ -562,3 +562,4 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
