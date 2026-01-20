@@ -38,7 +38,7 @@ try:
 except Exception:
     circuits_data = {}
 
-# ------------------- Load QUIZ.json safely (still loaded, but commands disabled) -------------------
+# ------------------- Load QUIZ.json safely (loaded but not used) -------------------
 QUIZ_FILENAME = "QUIZ.json"
 QUIZ_PATH = os.path.join(BASE_DIR, QUIZ_FILENAME)
 
@@ -56,7 +56,7 @@ except FileNotFoundError:
 except json.JSONDecodeError as e:
     quiz_error = f"{QUIZ_FILENAME} is not valid JSON: {e}"
 
-# ------------------- Topic menu (like quiz menu) -------------------
+# ------------------- Topic menu -------------------
 TOPIC_MENU = {
     "1": "analog signals",
     "2": "digital signal",
@@ -117,18 +117,13 @@ def clear_formula_state():
     session.pop("last_formula_key", None)
 
 def clear_state():
-    # quiz state (kept for safety, even though quiz commands are disabled)
     session.pop("quiz_active", None)
     session.pop("quiz_category", None)
     session.pop("quiz_index", None)
     session.pop("quiz_correct", None)
     session.pop("quiz_answered", None)
     session.pop("awaiting_quiz_pick", None)
-
-    # topic state
     session.pop("awaiting_topic_pick", None)
-
-    # formula state
     clear_formula_state()
 
 # ------------------- Text normalization + safe matching -------------------
@@ -170,6 +165,27 @@ def _match_intent(user_text: str):
 
     return random.choice(noanswer_intent.get("responses", ["Sorry, I didn't understand."])), "noanswer"
 
+# ------------------- Explain command -------------------
+EXPLAIN_TOPICS = {"ohm", "and", "or", "not", "nand", "nor", "xor"}
+
+def parse_explain_command(msg_clean: str):
+    parts = msg_clean.split()
+    if len(parts) == 2 and parts[0] == "explain":
+        topic = parts[1]
+        if topic in EXPLAIN_TOPICS:
+            return topic
+    return None
+
+# ------------------- Logic gates query -------------------
+def is_logic_gates_query(msg_clean: str) -> bool:
+    s = msg_clean.replace(" ", "")
+    return (
+        msg_clean in {"logic gate", "logic gates"} or
+        s in {"logicgate", "logicgates"} or
+        msg_clean.startswith("logic gate") or
+        msg_clean.startswith("logic gates")
+    )
+
 # ------------------- Pages -------------------
 @app.route("/")
 def home():
@@ -178,39 +194,19 @@ def home():
 # ------------------- Serve PDF pages as images -------------------
 @app.route("/pdf/page/<int:page_num>.png")
 def pdf_page_png(page_num: int):
-    """
-    page_num is 1-based (human-friendly)
-    """
     if page_num < 1:
         return "Invalid page", 400
 
     if not os.path.exists(PDF_PATH):
         return "PDF not found on server", 404
 
-    doc = fitz.open(PDF_PATH)
-    if page_num > doc.page_count:
-        doc.close()
-        return "Invalid page", 400
-
-    page = doc.load_page(page_num - 1)  # 0-based
-    pix = page.get_pixmap(dpi=120)
-    doc.close()
+    with fitz.open(PDF_PATH) as doc:
+        if page_num > doc.page_count:
+            return "Invalid page", 400
+        page = doc.load_page(page_num - 1)  # 0-based
+        pix = page.get_pixmap(dpi=120)
 
     return send_file(BytesIO(pix.tobytes("png")), mimetype="image/png")
-
-def is_logic_gates_query(msg_clean: str) -> bool:
-    """
-    msg_clean is already normalize_text(msg) (only letters/numbers/spaces)
-    """
-    s = msg_clean.replace(" ", "")  # "logic gates" -> "logicgates"
-    return (
-        msg_clean in {"logic gate", "logic gates"} or
-        s == "logicgate" or
-        s == "logicgates" or
-        msg_clean.startswith("logic gate") or
-        msg_clean.startswith("logic gates")
-    )
-
 
 # ------------------- Chat API -------------------
 @app.route("/chat", methods=["POST"])
@@ -234,11 +230,16 @@ def chat():
     # ✅ normalize after raw commands
     msg_clean = normalize_text(msg)
 
+    # ✅ explain ohm / explain and / explain not ...
+    explain_topic = parse_explain_command(msg_clean)
+    if explain_topic:
+        return jsonify({"type": "explain", "topic": explain_topic})
+
     # ✅ Logic gates slides (works anytime) — EXCLUDE 42 & 43
     if is_logic_gates_query(msg_clean):
         images = [
             f"/pdf/page/{p}.png"
-            for p in range(41, 57)    # 41..56
+            for p in range(41, 58)  # 41..57
             if p not in {42, 43}
         ]
         session["awaiting_topic_pick"] = False
@@ -302,8 +303,6 @@ def chat():
     # ------------------- Normal chatbot (uses intents.json) -------------------
     reply, _tag = _match_intent(msg)
     return jsonify({"type": "chat", "text": reply})
-
-
 
 # ------------------- Ohm's Law API -------------------
 def _to_float(x):
@@ -401,10 +400,3 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
-
-
-
-
-
-
-
