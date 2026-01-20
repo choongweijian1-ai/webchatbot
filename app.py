@@ -241,7 +241,6 @@ def chat():
             for p in range(41, 58)    # 41..57
             if p not in {42, 43}
         ]
-        # optional: exit topic mode if they were in it
         session["awaiting_topic_pick"] = False
         return jsonify({
             "type": "chat",
@@ -303,6 +302,7 @@ def chat():
     # ------------------- Normal chatbot (uses intents.json) -------------------
     reply, _tag = _match_intent(msg)
     return jsonify({"type": "chat", "text": reply})
+
 
 
 # ------------------- Ohm's Law API -------------------
@@ -401,6 +401,7 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
