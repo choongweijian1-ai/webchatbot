@@ -126,6 +126,7 @@
       "tag": "logic_levels",
       "patterns": [
         "logic levels",
+        "logic level",
         "what are logic levels",
         "define logic levels",
         "ttl and cmos",
@@ -149,6 +150,7 @@
       "tag": "number_systems",
       "patterns": [
         "number systems",
+        "number system",
         "what are number systems",
         "define number system",
         "decimal binary hexadecimal",
@@ -246,6 +248,7 @@
       "patterns": [
         "sop",
         "sum of products",
+        "sum of product",
         "what is sop",
         "sop expression",
         "define sum of products",
@@ -264,6 +267,7 @@
       "patterns": [
         "pos",
         "product of sums",
+        "product of sum",
         "what is pos",
         "pos expression",
         "define product of sums",
@@ -703,4 +707,5 @@
     }
   ]
 }
+
 
