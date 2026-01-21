@@ -700,7 +700,12 @@
       ],
       "responses": ["Alright. Whenever you are ready, type \"/topic\" or \"/quiz\"."]
     },
-    {"
+    {
+      "tag": "tipss",
+      "patterns": ["Tips", "tip"],
+      "responses": ["\n\nQuick tips:\n- /quiz  (list categories)\n- Type a number after /quiz (example: 6)\n- /topic (list topics)\n- Type a number after /topic (example: 7)\n- Type "Analog electronics" (Display BJT)\n- Type "series" or "parallel" (Display explanation & formula)\n- Type "resistor" (Display formula)\n- Type "logic gate" (Display slides with explanation)\n- /clear (reset quiz/topic)
+      ]
+    },  
     {
       "tag": "noanswer",
       "patterns": [],
@@ -708,6 +713,7 @@
     }
   ]
 }
+
 
 
 
