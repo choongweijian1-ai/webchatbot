@@ -78,19 +78,6 @@
         "types of number systems"
       ],
       "responses": [
-        "Definition:\nA number system represents numbers using a set of symbols and a base.\n\nUse:\nCommon systems used are Decimal (base 10), Binary (base 2), and Hexadecimal (base 16).\n\nWhy:\nDifferent number systems allow numbers to be expressed in forms convenient for different applications (e.g., human calculation = decimal, electronic calculation = binary)."
-      ]
-    },
-    {
-      "tag": "number_systems",
-      "patterns": [
-        "number systems",
-        "what are number systems",
-        "define number system",
-        "decimal binary hexadecimal",
-        "types of number systems"
-      ],
-      "responses": [
         "Number systems\nDefinition: A number system represents numbers using a set of symbols and a base.\nUse: Common systems used are Decimal (base 10), Binary (base 2), and Hexadecimal (base 16).\nWhy: Different number systems allow numbers to be expressed in forms convenient for different applications (e.g., human calculation = decimal, electronic calculation = binary)."
       ]
     },
@@ -353,6 +340,7 @@
     }
   ]
 }
+
 
 
 
