@@ -82,18 +82,19 @@
       ]
     },
     {
-      "tag": "decimal_number_system",
+      "tag": "number_systems",
       "patterns": [
-        "decimal number system",
-        "decimal system",
-        "base 10",
-        "what is base 10",
-        "define decimal number system"
+        "number systems",
+        "what are number systems",
+        "define number system",
+        "decimal binary hexadecimal",
+        "types of number systems"
       ],
       "responses": [
-        "Definition:\nDecimal is the universal system that uses ten symbols from 0 to 9, representing quantities outside a digital system. Each digit position has a value based on powers of 10.\n\nUse:\nUsed for everyday counting, measurement, and arithmetic by humans.\n\nWhy:\n• Easy readable\n• Easy to manipulate"
+        "Number systems\nDefinition: A number system represents numbers using a set of symbols and a base.\nUse: Common systems used are Decimal (base 10), Binary (base 2), and Hexadecimal (base 16).\nWhy: Different number systems allow numbers to be expressed in forms convenient for different applications (e.g., human calculation = decimal, electronic calculation = binary)."
       ]
     },
+
     {
       "tag": "binary_number_system",
       "patterns": [
@@ -352,6 +353,7 @@
     }
   ]
 }
+
 
 
 
