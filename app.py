@@ -100,6 +100,7 @@ def format_topic_menu() -> str:
 YES_WORDS = {"yes", "y", "yeah", "yup", "sure", "ok", "okay"}
 NO_WORDS = {"no", "n", "nope", "nah"}
 FORMULA_PROMPT = "\n\n📘 Would you like to learn more? (yes / no)"
+COMMAND_FOOTER = '\n\nType "/topic" to continue or type "tips" to see the available commands.'
 
 def set_formula_state(key: str):
     session["awaiting_formula_choice"] = True
@@ -460,25 +461,28 @@ def chat():
 
         return jsonify({"type": "chat", "text": "Please reply with yes or no.\n\n📘 Would you like to learn more? (yes / no)"})
 
-    # topic selection mode
+
+    # topic selection mode  ✅ (THIS MUST BE OUTSIDE formula yes/no)
     if session.get("awaiting_topic_pick"):
         if msg_clean.isdigit():
             topic_phrase = TOPIC_MENU.get(msg_clean)
             if not topic_phrase:
                 return jsonify({"type": "chat", "text": "❌ Invalid selection. Type /topic to see the menu again."})
+
             session["awaiting_topic_pick"] = False
             reply, _tag = _match_intent(topic_phrase)
-            return jsonify({"type": "chat", "text": reply})
+            return jsonify({"type": "chat", "text": reply + COMMAND_FOOTER})
 
         normalized_menu = {normalize_text(v): v for v in TOPIC_MENU.values()}
         if msg_clean in normalized_menu:
             session["awaiting_topic_pick"] = False
             reply, _tag = _match_intent(normalized_menu[msg_clean])
-            return jsonify({"type": "chat", "text": reply})
+            return jsonify({"type": "chat", "text": reply + COMMAND_FOOTER})
 
         return jsonify({"type": "chat", "text": "❌ Please reply with a topic number or name.\nType /topic to see the menu again."})
 
-    # normal intents
+
+    # normal intents ✅ final fallback
     reply, _tag = _match_intent(msg)
     return jsonify({"type": "chat", "text": reply})
 
@@ -577,4 +581,5 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
