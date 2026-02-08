@@ -50,7 +50,23 @@ except FileNotFoundError:
 except json.JSONDecodeError as e:
     quiz_error = f"{QUIZ_FILENAME} is not valid JSON: {e}"
 
-# ------------------- Topic menu -------------------
+# ------------------- Module menu -------------------
+MODULE_MENU = {
+    "1": "digital electronics",
+    "2": "analogue electronics",
+    "3": "electrical",
+}
+
+def format_module_menu() -> str:
+    lines = ["📚 Available Modules:"]
+    for k in sorted(MODULE_MENU.keys(), key=lambda x: int(x)):
+        lines.append(f"{k}. {MODULE_MENU[k].title()}")
+    lines.append("")
+    lines.append("Reply with a number (example: 1) to continue.")
+    lines.append('Or type the module name (example: "digital electronics").')
+    return "\n".join(lines)
+
+# ------------------- Topic menu (Digital Electronics) -------------------
 TOPIC_MENU = {
     "1": "analog signals",
     "2": "digital signal",
@@ -88,7 +104,7 @@ TOPIC_MENU = {
 }
 
 def format_topic_menu() -> str:
-    lines = ["📘 Available Topics:"]
+    lines = ["📘 Available Topics (Digital Electronics):"]
     for k in sorted(TOPIC_MENU.keys(), key=lambda x: int(x)):
         lines.append(f"{k}. {TOPIC_MENU[k].title()}")
     lines.append("")
@@ -100,7 +116,7 @@ def format_topic_menu() -> str:
 YES_WORDS = {"yes", "y", "yeah", "yup", "sure", "ok", "okay"}
 NO_WORDS = {"no", "n", "nope", "nah"}
 FORMULA_PROMPT = "\n\n📘 Would you like to learn more? (yes / no)"
-COMMAND_FOOTER = '\n\nType "/topic" to continue or type "tips" to see the available commands.'
+COMMAND_FOOTER = '\n\nType "/modules" to choose a module, or type "tips" to see the available commands.'
 
 def set_formula_state(key: str):
     session["awaiting_formula_choice"] = True
@@ -118,6 +134,7 @@ def clear_state():
     session.pop("quiz_answered", None)
     session.pop("awaiting_quiz_pick", None)
     session.pop("awaiting_topic_pick", None)
+    session.pop("awaiting_module_pick", None)
     clear_formula_state()
 
 # ------------------- Text normalization + safe matching -------------------
@@ -355,7 +372,13 @@ def chat():
         clear_state()
         return jsonify({"type": "chat", "text": "🧹 Cleared state."})
 
-    # /topic opens topic menu
+    # ✅ NEW: /modules opens module menu
+    if msg_raw == "/modules":
+        clear_state()
+        session["awaiting_module_pick"] = True
+        return jsonify({"type": "chat", "text": format_module_menu()})
+
+    # (Optional) keep /topic as alias to Digital Electronics menu
     if msg_raw == "/topic":
         session["awaiting_topic_pick"] = True
         return jsonify({"type": "chat", "text": format_topic_menu()})
@@ -371,7 +394,58 @@ def chat():
 
     msg_clean = normalize_text(msg)
 
-    # picking quiz category
+    # ------------------- Module selection mode ✅ -------------------
+    if session.get("awaiting_module_pick"):
+        # number selection
+        if msg_clean.isdigit():
+            module_name = MODULE_MENU.get(msg_clean)
+            if not module_name:
+                return jsonify({"type": "chat", "text": "❌ Invalid selection. Type /modules to see the menu again."})
+
+            session["awaiting_module_pick"] = False
+
+            # Module 1: Digital Electronics -> show topic menu
+            if module_name == "digital electronics":
+                session["awaiting_topic_pick"] = True
+                return jsonify({"type": "chat", "text": "✅ Digital Electronics selected.\n\n" + format_topic_menu()})
+
+            # Module 2: Analogue Electronics -> show BJT PDF pages
+            if module_name == "analogue electronics":
+                images = [f"/pdf/BJT.pdf/page/{p}.png" for p in range(1, 13)]
+                return jsonify({
+                    "type": "chat",
+                    "text": "📘 Analogue Electronics: BJT (Slides 1–12)",
+                    "images": images
+                })
+
+            # Module 3: Electrical -> placeholder
+            if module_name == "electrical":
+                return jsonify({"type": "chat", "text": "✅ Electrical selected. (Add your electrical topics/material here.)"})
+
+        # text selection (by name)
+        normalized = {normalize_text(v): v for v in MODULE_MENU.values()}
+        if msg_clean in normalized:
+            chosen = normalized[msg_clean]
+            session["awaiting_module_pick"] = False
+
+            if chosen == "digital electronics":
+                session["awaiting_topic_pick"] = True
+                return jsonify({"type": "chat", "text": "✅ Digital Electronics selected.\n\n" + format_topic_menu()})
+
+            if chosen == "analogue electronics":
+                images = [f"/pdf/BJT.pdf/page/{p}.png" for p in range(1, 13)]
+                return jsonify({
+                    "type": "chat",
+                    "text": "📘 Analogue Electronics: BJT (Slides 1–12)",
+                    "images": images
+                })
+
+            if chosen == "electrical":
+                return jsonify({"type": "chat", "text": "✅ Electrical selected. (Add your electrical topics/material here.)"})
+
+        return jsonify({"type": "chat", "text": "❌ Please reply with a module number or name.\nType /modules to see the menu again."})
+
+    # ------------------- picking quiz category -------------------
     if session.get("awaiting_quiz_pick") and msg_clean.isdigit():
         session["awaiting_quiz_pick"] = False
         category = quiz_menu.get(msg_clean) if isinstance(quiz_menu, dict) else None
@@ -416,20 +490,17 @@ def chat():
             "images": images
         })
 
-    # analogue electronics pdf
+    # analogue electronics query (still supported by typing "analogue electronics")
     if is_analog_electronics_query(msg_clean):
-        images = [
-            f"/pdf/BJT.pdf/page/{p}.png"
-            for p in range(1, 11)
-        ]
+        images = [f"/pdf/BJT.pdf/page/{p}.png" for p in range(1, 13)]
         session["awaiting_topic_pick"] = False
         return jsonify({
             "type": "chat",
-            "text": "📘 BJT(Bipolar Junction Transistor), (Slides 2–10)",
+            "text": "📘 BJT (Bipolar Junction Transistor), (Slides 1–12)",
             "images": images
         })
 
-    # series/parallel (works anytime, even after /topic)
+    # series/parallel (works anytime, even after menus)
     if is_series_query(msg_clean):
         set_formula_state("series")
         return jsonify({"type": "chat", "text": format_circuit_text("series") + FORMULA_PROMPT})
@@ -457,12 +528,11 @@ def chat():
 
         if ans in NO_WORDS:
             clear_formula_state()
-            return jsonify({"type": "chat", "text": "Alright. You may type /topic or /quiz to learn more."})
+            return jsonify({"type": "chat", "text": 'Alright. You may type /modules or /quiz to learn more.'})
 
         return jsonify({"type": "chat", "text": "Please reply with yes or no.\n\n📘 Would you like to learn more? (yes / no)"})
 
-
-    # topic selection mode  ✅ (THIS MUST BE OUTSIDE formula yes/no)
+    # topic selection mode (Digital topics)
     if session.get("awaiting_topic_pick"):
         if msg_clean.isdigit():
             topic_phrase = TOPIC_MENU.get(msg_clean)
@@ -480,7 +550,6 @@ def chat():
             return jsonify({"type": "chat", "text": reply + COMMAND_FOOTER})
 
         return jsonify({"type": "chat", "text": "❌ Please reply with a topic number or name.\nType /topic to see the menu again."})
-
 
     # normal intents ✅ final fallback
     reply, _tag = _match_intent(msg)
@@ -581,7 +650,3 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
-
-
-
-
