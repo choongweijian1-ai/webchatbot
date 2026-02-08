@@ -488,7 +488,7 @@ def chat():
 
             if topic == "electrical circuit":
                 images = [f"/pdf/ELECTRICAL.pdf/page/{p}.png" for p in range(2, 14)]
-                return jsonify({"type": "chat", "text": "📘 Electrical Circuit (Slides 10–13)", "images": images})
+                return jsonify({"type": "chat", "text": "📘 Electrical Circuit (Slides 1–13)", "images": images})
 
             return jsonify({"type": "chat", "text": "✅ Topic selected, but no content added yet."})
 
@@ -705,5 +705,6 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
