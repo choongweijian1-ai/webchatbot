@@ -420,7 +420,7 @@ def chat():
     if is_analog_electronics_query(msg_clean):
         images = [
             f"/pdf/BJT.pdf/page/{p}.png"
-            for p in range(2, 11)
+            for p in range(1, 11)
         ]
         session["awaiting_topic_pick"] = False
         return jsonify({
@@ -581,6 +581,7 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
