@@ -482,8 +482,8 @@ def chat():
             topic = normalized_menu[msg_clean]
 
             if topic == "diode":
-                images = [f"/pdf/Diode.pdf/page/{p}.png" for p in range(1, 13)]
-                return jsonify({"type": "chat", "text": "📘 Diode (Slides 1–12)", "images": images})
+                images = [f"/pdf/Diode.pdf/page/{p}.png" for p in range(1, 39)]
+                return jsonify({"type": "chat", "text": "📘 Diode (Slides 30–31)", "images": images})
 
             return jsonify({"type": "chat", "text": "✅ Topic selected, but no content added yet."})
 
@@ -700,3 +700,4 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
