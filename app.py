@@ -443,7 +443,7 @@ def chat():
             if chosen == "electrical":
                 return jsonify({"type": "chat", "text": "✅ Electrical selected. (Add your electrical topics/material here.)"})
 
-        return jsonify({"type": "chat", "text": "❌ Please reply with a module number or name.\nType /modules to see the menu again."})
+        return jsonify({"type": "chat", "text": "❌ Please reply with a module name.\nType /modules to see the menu again."})
 
     # ------------------- picking quiz category -------------------
     if session.get("awaiting_quiz_pick") and msg_clean.isdigit():
@@ -650,3 +650,4 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
