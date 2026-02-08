@@ -394,56 +394,48 @@ def chat():
 
     msg_clean = normalize_text(msg)
 
-    # ------------------- Module selection mode ✅ -------------------
+    # module selection mode ✅ (non-blocking)
     if session.get("awaiting_module_pick"):
-        # number selection
+        # If user typed a module number
         if msg_clean.isdigit():
             module_name = MODULE_MENU.get(msg_clean)
             if not module_name:
                 return jsonify({"type": "chat", "text": "❌ Invalid selection. Type /modules to see the menu again."})
-
+    
             session["awaiting_module_pick"] = False
-
-            # Module 1: Digital Electronics -> show topic menu
+    
             if module_name == "digital electronics":
                 session["awaiting_topic_pick"] = True
                 return jsonify({"type": "chat", "text": "✅ Digital Electronics selected.\n\n" + format_topic_menu()})
-
-            # Module 2: Analogue Electronics -> show BJT PDF pages
+    
             if module_name == "analogue electronics":
                 images = [f"/pdf/BJT.pdf/page/{p}.png" for p in range(1, 13)]
-                return jsonify({
-                    "type": "chat",
-                    "text": "📘 Analogue Electronics: BJT (Slides 1–12)",
-                    "images": images
-                })
-
-            # Module 3: Electrical -> placeholder
+                return jsonify({"type": "chat", "text": "📘 Analogue Electronics: BJT (Slides 1–12)", "images": images})
+    
             if module_name == "electrical":
                 return jsonify({"type": "chat", "text": "✅ Electrical selected. (Add your electrical topics/material here.)"})
-
-        # text selection (by name)
+    
+        # If user typed a module name
         normalized = {normalize_text(v): v for v in MODULE_MENU.values()}
         if msg_clean in normalized:
             chosen = normalized[msg_clean]
             session["awaiting_module_pick"] = False
-
+    
             if chosen == "digital electronics":
                 session["awaiting_topic_pick"] = True
                 return jsonify({"type": "chat", "text": "✅ Digital Electronics selected.\n\n" + format_topic_menu()})
-
+    
             if chosen == "analogue electronics":
                 images = [f"/pdf/BJT.pdf/page/{p}.png" for p in range(1, 13)]
-                return jsonify({
-                    "type": "chat",
-                    "text": "📘 Analogue Electronics: BJT (Slides 1–12)",
-                    "images": images
-                })
-
+                return jsonify({"type": "chat", "text": "📘 Analogue Electronics: BJT (Slides 1–12)", "images": images})
+    
             if chosen == "electrical":
                 return jsonify({"type": "chat", "text": "✅ Electrical selected. (Add your electrical topics/material here.)"})
+    
+        # ✅ Not a module choice -> stop waiting for module and continue normally
+        session["awaiting_module_pick"] = False
+        # IMPORTANT: do NOT return here; let the code continue to series/logic gates/etc.
 
-        return jsonify({"type": "chat", "text": "❌ Please reply with a module name.\nType /modules to see the menu again."})
 
     # ------------------- picking quiz category -------------------
     if session.get("awaiting_quiz_pick") and msg_clean.isdigit():
@@ -650,4 +642,5 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
