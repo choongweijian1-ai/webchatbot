@@ -115,9 +115,7 @@ def format_topic_menu() -> str:
 # ------------------- Electrical & Electronics topic menu -------------------
 ELECTRICAL_MENU = {
     "1": "diode",
-    # Add more later:
-    # "2": "rectifier",
-    # "3": "zener diode",
+    "2": "electrical circuit",
 }
 
 def format_electrical_menu() -> str:
@@ -229,7 +227,7 @@ def format_circuit_text(key: str) -> str:
 
     return "\n".join(lines)
 
-# ------------------- Logic gates query -------------------
+# ------------------- Query helpers -------------------
 def is_logic_gates_query(msg_clean: str) -> bool:
     s = msg_clean.replace(" ", "")
     return (
@@ -239,7 +237,6 @@ def is_logic_gates_query(msg_clean: str) -> bool:
         msg_clean.startswith("logic gates")
     )
 
-# ------------------- Analogue electronics query -------------------
 def is_analog_electronics_query(msg_clean: str) -> bool:
     s = msg_clean.replace(" ", "")
     return (
@@ -249,7 +246,6 @@ def is_analog_electronics_query(msg_clean: str) -> bool:
         msg_clean.startswith("analogue")
     )
 
-# ------------------- Electrical topic query helpers -------------------
 def is_diode_query(msg_clean: str) -> bool:
     s = msg_clean.replace(" ", "")
     return (
@@ -257,7 +253,6 @@ def is_diode_query(msg_clean: str) -> bool:
         s in {"pnjunctiondiode", "pnjunction"}
     )
 
-# ------------------- Better series/parallel detection -------------------
 def is_series_query(msg_clean: str) -> bool:
     s = msg_clean.replace(" ", "")
     return msg_clean in {"series", "series circuit"} or s in {"series", "seriescircuit"} or msg_clean.startswith("series")
@@ -470,9 +465,15 @@ def chat():
 
             session["awaiting_electrical_pick"] = False
 
+            # Option 1: Diode (pages 30–31)
             if topic == "diode":
                 images = [f"/pdf/Diode.pdf/page/{p}.png" for p in range(30, 32)]
                 return jsonify({"type": "chat", "text": "📘 Diode (Slides 30–31)", "images": images})
+
+            # Option 2: Electrical Circuit (ELECTRICAL.pdf pages 10–13)
+            if topic == "electrical circuit":
+                images = [f"/pdf/ELECTRICAL.pdf/page/{p}.png" for p in range(10, 14)]
+                return jsonify({"type": "chat", "text": "📘 Series/Parallel (Slides 10–13)", "images": images})
 
             return jsonify({"type": "chat", "text": "✅ Topic selected, but no content added yet."})
 
@@ -482,8 +483,12 @@ def chat():
             topic = normalized_menu[msg_clean]
 
             if topic == "diode":
-                images = [f"/pdf/Diode.pdf/page/{p}.png" for p in range(1, 39)]
+                images = [f"/pdf/Diode.pdf/page/{p}.png" for p in range(30, 32)]
                 return jsonify({"type": "chat", "text": "📘 Diode (Slides 30–31)", "images": images})
+
+            if topic == "electrical circuit":
+                images = [f"/pdf/ELECTRICAL.pdf/page/{p}.png" for p in range(10, 14)]
+                return jsonify({"type": "chat", "text": "📘 Electrical Circuit (Slides 10–13)", "images": images})
 
             return jsonify({"type": "chat", "text": "✅ Topic selected, but no content added yet."})
 
@@ -700,5 +705,3 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
-
-
