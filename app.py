@@ -471,8 +471,8 @@ def chat():
             session["awaiting_electrical_pick"] = False
 
             if topic == "diode":
-                images = [f"/pdf/Diode.pdf/page/{p}.png" for p in range(1, 13)]
-                return jsonify({"type": "chat", "text": "📘 Diode (Slides 1–12)", "images": images})
+                images = [f"/pdf/Diode.pdf/page/{p}.png" for p in range(30, 32)]
+                return jsonify({"type": "chat", "text": "📘 Diode (Slides 30–31)", "images": images})
 
             return jsonify({"type": "chat", "text": "✅ Topic selected, but no content added yet."})
 
@@ -546,9 +546,9 @@ def chat():
 
     # diode direct query (works even without choosing module)
     if is_diode_query(msg_clean):
-        images = [f"/pdf/Diode.pdf/page/{p}.png" for p in range(1, 13)]
+        images = [f"/pdf/Diode.pdf/page/{p}.png" for p in range(30, 32)]
         session["awaiting_topic_pick"] = False
-        return jsonify({"type": "chat", "text": "📘 Diode (Slides 1–12)", "images": images})
+        return jsonify({"type": "chat", "text": "📘 Diode (Slides 30–31)", "images": images})
 
     # series/parallel (works anytime)
     if is_series_query(msg_clean):
@@ -700,4 +700,5 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
