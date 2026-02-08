@@ -21,7 +21,7 @@ window.addEventListener("DOMContentLoaded", () => {
   - Type a number after /quiz (example: 6)
   - /topic (list topics)
   - Type a number after /topic (example: 7)
-  - Type "Analog electronics" (Display BJT)
+  - Type "Analog electronics" (Display BJT notes)
   - Type "series" or "parallel" (Display explanation & formula)
   - Type "resistor" (Display formula)
   - Type "logic gate" (Display slides with explanation)
@@ -594,5 +594,6 @@ Output is 1 only when inputs are DIFFERENT.
 1 1 → 0`;
   }
 }
+
 
 
