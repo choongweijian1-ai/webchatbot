@@ -112,6 +112,23 @@ def format_topic_menu() -> str:
     lines.append('Or type the topic name (example: "binary number system").')
     return "\n".join(lines)
 
+# ------------------- Electrical & Electronics topic menu -------------------
+ELECTRICAL_MENU = {
+    "1": "diode",
+    # Add more later:
+    # "2": "rectifier",
+    # "3": "zener diode",
+}
+
+def format_electrical_menu() -> str:
+    lines = ["⚡ Electrical & Electronics Topics:"]
+    for k in sorted(ELECTRICAL_MENU.keys(), key=lambda x: int(x)):
+        lines.append(f"{k}. {ELECTRICAL_MENU[k].title()}")
+    lines.append("")
+    lines.append("Reply with a number (example: 1) to continue.")
+    lines.append('Or type the topic name (example: "diode").')
+    return "\n".join(lines)
+
 # ------------------- Formula follow-up states -------------------
 YES_WORDS = {"yes", "y", "yeah", "yup", "sure", "ok", "okay"}
 NO_WORDS = {"no", "n", "nope", "nah"}
@@ -135,6 +152,7 @@ def clear_state():
     session.pop("awaiting_quiz_pick", None)
     session.pop("awaiting_topic_pick", None)
     session.pop("awaiting_module_pick", None)
+    session.pop("awaiting_electrical_pick", None)
     clear_formula_state()
 
 # ------------------- Text normalization + safe matching -------------------
@@ -229,6 +247,14 @@ def is_analog_electronics_query(msg_clean: str) -> bool:
         s in {"analogelectronics", "analogueelectronics"} or
         msg_clean.startswith("analog") or
         msg_clean.startswith("analogue")
+    )
+
+# ------------------- Electrical topic query helpers -------------------
+def is_diode_query(msg_clean: str) -> bool:
+    s = msg_clean.replace(" ", "")
+    return (
+        msg_clean in {"diode", "diodes", "pn junction diode", "pn junction"} or
+        s in {"pnjunctiondiode", "pnjunction"}
     )
 
 # ------------------- Better series/parallel detection -------------------
@@ -372,7 +398,7 @@ def chat():
         clear_state()
         return jsonify({"type": "chat", "text": "🧹 Cleared state."})
 
-    # ✅ NEW: /modules opens module menu
+    # /modules opens module menu
     if msg_raw == "/modules":
         clear_state()
         session["awaiting_module_pick"] = True
@@ -394,48 +420,74 @@ def chat():
 
     msg_clean = normalize_text(msg)
 
-    # module selection mode ✅ (non-blocking)
+    # ------------------- Module selection mode (non-blocking) -------------------
     if session.get("awaiting_module_pick"):
-        # If user typed a module number
         if msg_clean.isdigit():
             module_name = MODULE_MENU.get(msg_clean)
             if not module_name:
                 return jsonify({"type": "chat", "text": "❌ Invalid selection. Type /modules to see the menu again."})
-    
+
             session["awaiting_module_pick"] = False
-    
+
             if module_name == "digital electronics":
                 session["awaiting_topic_pick"] = True
                 return jsonify({"type": "chat", "text": "✅ Digital Electronics selected.\n\n" + format_topic_menu()})
-    
+
             if module_name == "analogue electronics":
                 images = [f"/pdf/BJT.pdf/page/{p}.png" for p in range(1, 13)]
                 return jsonify({"type": "chat", "text": "📘 Analogue Electronics: BJT (Slides 1–12)", "images": images})
-    
+
             if module_name == "electrical":
-                return jsonify({"type": "chat", "text": "✅ Electrical selected. (Add your electrical topics/material here.)"})
-    
-        # If user typed a module name
+                session["awaiting_electrical_pick"] = True
+                return jsonify({"type": "chat", "text": "✅ Electrical selected.\n\n" + format_electrical_menu()})
+
         normalized = {normalize_text(v): v for v in MODULE_MENU.values()}
         if msg_clean in normalized:
             chosen = normalized[msg_clean]
             session["awaiting_module_pick"] = False
-    
+
             if chosen == "digital electronics":
                 session["awaiting_topic_pick"] = True
                 return jsonify({"type": "chat", "text": "✅ Digital Electronics selected.\n\n" + format_topic_menu()})
-    
+
             if chosen == "analogue electronics":
                 images = [f"/pdf/BJT.pdf/page/{p}.png" for p in range(1, 13)]
                 return jsonify({"type": "chat", "text": "📘 Analogue Electronics: BJT (Slides 1–12)", "images": images})
-    
-            if chosen == "electrical":
-                return jsonify({"type": "chat", "text": "✅ Electrical selected. (Type series, Type parallel, Type resistor /)"})
-    
-        # ✅ Not a module choice -> stop waiting for module and continue normally
-        session["awaiting_module_pick"] = False
-        # IMPORTANT: do NOT return here; let the code continue to series/logic gates/etc.
 
+            if chosen == "electrical":
+                session["awaiting_electrical_pick"] = True
+                return jsonify({"type": "chat", "text": "✅ Electrical selected.\n\n" + format_electrical_menu()})
+
+        session["awaiting_module_pick"] = False
+        # continue to other handlers
+
+    # ------------------- Electrical topic selection mode ✅ -------------------
+    if session.get("awaiting_electrical_pick"):
+        if msg_clean.isdigit():
+            topic = ELECTRICAL_MENU.get(msg_clean)
+            if not topic:
+                return jsonify({"type": "chat", "text": "❌ Invalid selection.\n\n" + format_electrical_menu()})
+
+            session["awaiting_electrical_pick"] = False
+
+            if topic == "diode":
+                images = [f"/pdf/Diode.pdf/page/{p}.png" for p in range(1, 13)]
+                return jsonify({"type": "chat", "text": "📘 Diode (Slides 1–12)", "images": images})
+
+            return jsonify({"type": "chat", "text": "✅ Topic selected, but no content added yet."})
+
+        normalized_menu = {normalize_text(v): v for v in ELECTRICAL_MENU.values()}
+        if msg_clean in normalized_menu:
+            session["awaiting_electrical_pick"] = False
+            topic = normalized_menu[msg_clean]
+
+            if topic == "diode":
+                images = [f"/pdf/Diode.pdf/page/{p}.png" for p in range(1, 13)]
+                return jsonify({"type": "chat", "text": "📘 Diode (Slides 1–12)", "images": images})
+
+            return jsonify({"type": "chat", "text": "✅ Topic selected, but no content added yet."})
+
+        return jsonify({"type": "chat", "text": "❌ Please reply with an Electrical topic number or name.\n\n" + format_electrical_menu()})
 
     # ------------------- picking quiz category -------------------
     if session.get("awaiting_quiz_pick") and msg_clean.isdigit():
@@ -482,7 +534,7 @@ def chat():
             "images": images
         })
 
-    # analogue electronics query (still supported by typing "analogue electronics")
+    # analogue electronics query (typing "analogue electronics" shows BJT)
     if is_analog_electronics_query(msg_clean):
         images = [f"/pdf/BJT.pdf/page/{p}.png" for p in range(1, 13)]
         session["awaiting_topic_pick"] = False
@@ -492,7 +544,13 @@ def chat():
             "images": images
         })
 
-    # series/parallel (works anytime, even after menus)
+    # diode direct query (works even without choosing module)
+    if is_diode_query(msg_clean):
+        images = [f"/pdf/Diode.pdf/page/{p}.png" for p in range(1, 13)]
+        session["awaiting_topic_pick"] = False
+        return jsonify({"type": "chat", "text": "📘 Diode (Slides 1–12)", "images": images})
+
+    # series/parallel (works anytime)
     if is_series_query(msg_clean):
         set_formula_state("series")
         return jsonify({"type": "chat", "text": format_circuit_text("series") + FORMULA_PROMPT})
@@ -642,6 +700,3 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
-
-
-
