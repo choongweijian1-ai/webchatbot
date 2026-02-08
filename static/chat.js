@@ -19,8 +19,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const OPENING_MESSAGE = `👋 Hi! Quick tips:
   - /quiz  (list categories)
   - Type a number after /quiz (example: 6)
-  - /topic (list topics)
-  - Type a number after /topic (example: 7)
+  - /module (list modules)
   - Type "Analog electronics" (Display BJT notes)
   - Type "series" or "parallel" (Display explanation & formula)
   - Type "resistor" (Display formula)
@@ -594,6 +593,7 @@ Output is 1 only when inputs are DIFFERENT.
 1 1 → 0`;
   }
 }
+
 
 
 
