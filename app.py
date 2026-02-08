@@ -430,7 +430,7 @@ def chat():
                 return jsonify({"type": "chat", "text": "📘 Analogue Electronics: BJT (Slides 1–12)", "images": images})
     
             if chosen == "electrical":
-                return jsonify({"type": "chat", "text": "✅ Electrical selected. (Add your electrical topics/material here.)"})
+                return jsonify({"type": "chat", "text": "✅ Electrical selected. (Type series, Type parallel, Type resistor /)"})
     
         # ✅ Not a module choice -> stop waiting for module and continue normally
         session["awaiting_module_pick"] = False
@@ -642,5 +642,6 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
