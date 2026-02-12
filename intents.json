@@ -698,7 +698,7 @@
         "revision",
         "study mode"
       ],
-      "responses": ["Alright. Whenever you are ready, type \"/topic\" or \"/quiz\"."]
+      "responses": ["Alright. Whenever you are ready, type \"/tip\" to guide you"]
     },
     {
       "tag": "tipss",
@@ -714,6 +714,7 @@
     }
   ]
 }
+
 
 
 
