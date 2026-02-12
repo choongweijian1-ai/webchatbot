@@ -290,7 +290,7 @@ def pdf_page_png(pdf_name: str, page_num: int):
 
 # ------------------- Quiz helpers -------------------
 def format_quiz_menu() -> str:
-    lines = ["✅ Available quiz categories:"]
+    lines = ["✅ Available quiz categories for Digital Electronics:"]
     if isinstance(quiz_menu, dict) and quiz_menu:
         for k in sorted(quiz_menu.keys(), key=lambda x: int(x)):
             lines.append(f"{k}. {quiz_menu[k]}")
@@ -705,6 +705,7 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
