@@ -17,7 +17,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // Opening message shown on load and after clearing chat
   const OPENING_MESSAGE = `👋 Hi! Quick tips:
-  - /quiz  (list categories)
+  - /quiz  (Digital Electronics quiz available)
   - /topic (list of all Digital Electronics topics)
   - Type a number after /quiz (example: 6)
   - /modules (list modules)
@@ -593,6 +593,7 @@ Output is 1 only when inputs are DIFFERENT.
 1 1 → 0`;
   }
 }
+
 
 
 
