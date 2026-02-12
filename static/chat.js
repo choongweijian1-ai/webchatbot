@@ -23,7 +23,6 @@ window.addEventListener("DOMContentLoaded", () => {
   - /modules (list modules)
   - Type "Analog electronics" (Display BJT PPT)
   - Type "series" or "parallel" (Display explanation & formula)
-  - Type "resistor" (Display formula)
   - Type "logic gate" (Display slides with explanation)
   - /clear (reset quiz/topic)
   `;
@@ -594,6 +593,7 @@ Output is 1 only when inputs are DIFFERENT.
 1 1 → 0`;
   }
 }
+
 
 
 
