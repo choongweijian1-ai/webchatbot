@@ -710,10 +710,11 @@
     {
       "tag": "noanswer",
       "patterns": [],
-      "responses": ["Sorry, I am only able to answer specific questions like: Analog Signal, Digital Signal, Logic Levels, Number Systems, Binary Number System, Hexadecimal Number System, SOP, POS, Karnaugh Map, Half Adder, Full Adder, and 2’s Complement. Type \"/modules\" to chooe or type \"tip\"."]
+      "responses": ["Sorry, I am only able to answer specific questions like: Analog Signal, Digital Signal, Logic Levels, Number Systems, Binary Number System, Hexadecimal Number System, SOP, POS, Karnaugh Map, Half Adder, Full Adder, and 2’s Complement. Type \"/modules\" to choose module to learn or type \"tip\" for chatbot guide."]
     }
   ]
 }
+
 
 
 
