@@ -394,7 +394,7 @@ def chat():
         return jsonify({"type": "chat", "text": "🧹 Cleared state."})
 
     # /modules opens module menu
-    if msg_raw == {"/modules", "/module"}:
+    if msg_raw == "/modules":
         clear_state()
         session["awaiting_module_pick"] = True
         return jsonify({"type": "chat", "text": format_module_menu()})
@@ -705,6 +705,7 @@ def api_resistors():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
